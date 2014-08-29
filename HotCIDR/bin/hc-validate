@@ -1,0 +1,24 @@
+#!/usr/bin/env python2
+import argparse
+import hotcidr.validation as v
+
+parser = argparse.ArgumentParser(description="Validate a fwman ruleset")
+parser.add_argument('ruleset', help="Path to fwman ruleset")
+
+args = parser.parse_args()
+
+validator = v.Validator(args.ruleset)
+validator.register_checks(
+    v.find_unused_groups,
+    v.validate_groups,
+    v.validate_group_names,
+    v.validate_aws_instance_id,
+    v.validate_aws_group_id,
+    v.validate_protocols,
+    #v.validate_ports,
+    v.validate_rule_fields,
+    v.validate_group_fields,
+    v.validate_instance_fields,
+    v.validate_locations,
+)
+validator.validate()

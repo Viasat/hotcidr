@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <title>fwman audit</title>
+  <link href="../css/bootstrap.min.css" rel="stylesheet">
+  <link href="../css/index.css" rel="stylesheet">
+  <script type="text/javascript" src="../js/jquery.min.js"></script>
+  <script type="text/javascript" src="../js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../js/jquery.tablesorter.min.js"></script>
+  <!--
+  <script type="text/javascript">
+  $(function() {
+    $('table').tablesorter({
+      'sortReset': true,
+      'headers': {
+        6: {
+          'sorter': 'shortDate'
+        },
+        7: {
+          'sorter': 'shortDate'
+        }
+      }
+    });
+  });
+  </script>
+  <style type="text/css">
+  table>thead>tr>td {
+    padding-right: 18px!important;
+    background-image: url(data:image/gif;base64,R0lGODlhFQAJAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAkAAAIXjI+AywnaYnhUMoqt3gZXPmVg94yJVQAAOw==);
+    background-repeat: no-repeat;
+    background-position: center right;
+  }
+
+  .tablesorter-headerAsc {
+    background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAQAAAINjI8Bya2wnINUMopZAQA7);
+  }
+
+  .tablesorter-headerDesc {
+    background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAQAAAINjB+gC+jP2ptn0WskLQA7);
+  }
+  </style>
+  -->
+  </head>
+
+  <body>
+  <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../">fwman</a>
+      </div>
+      <div class="collapse navbar-collapse">
+        <ul class="nav navbar-nav">
+          <li><a href="../">Home</a></li>
+          <li class="active"><a href="#">Job Output</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="container">
+    <div style="text-align: right">
+      <a href="#" class="btn btn-default btn-sm" data-toggle="modal" data-target="#buildlogmodal" role="button">View Build Log</a>
+      <a href="{{ download }}" class="btn btn-default btn-sm" role="button">Download as CSV</a>
+    </div>
+    {% for entry in entries %}
+    <h3>{{ entry.id }} ({{ entry.name }})</h3>
+    <ul>
+      {% for machine in entry.machines %}
+      <li>{{ machine }}</li>
+      {% endfor %}
+    </ul>
+
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <td>Action</td>
+          <td>Protocol</td>
+          <td>Port</td>
+          <td>Direction</td>
+          <td>Type</td>
+          <td>Location</td>
+          <td>Proposed</td>
+          <td>Approved</td>
+          <td>Justification</td>
+          <td>Description</td>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rule in entry.rules %}
+        <tr{% if rule.action.startswith('unauthorized') %} class="danger"{% endif %}>
+          <td>{{ rule.action }}</td>
+          <td>{{ rule.protocol }}</td>
+          <td>{{ rule.ports }}</td>
+          <td>{{ rule.direction }}</td>
+          <td>{{ rule.type }}</td>
+          <td>{{ rule.location }}</td>
+          <td>{{ rule.proposed }}</td>
+          <td>{{ rule.approved }}</td>
+          <td>{{ rule.justification }}</td>
+          <td>{{ rule.description }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endfor %}
+  </div>
+
+  <div class="modal" id="buildlogmodal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title">Build Log</h4>
+        </div>
+        <div class="modal-body">
+          <pre>{{ build_log }}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="container text-muted">
+      <span>¯\_(ツ)_/¯</span>
+    </div>
+  </div>
+  </body>
+</html>
