@@ -11,6 +11,7 @@ Table of Contents
  - [Workflows](#workflow)
  - [Setup](#setup)
  - [Documentation](#documentation)
+ - [Authors](#authors)
  - [Copyright and license](#copyright-and-license)
 
 Workflow
@@ -86,8 +87,12 @@ Documentation
 TBD :/
 
 
+Authors
+-------
+This code was initially written by Justin Bass, James Kwan, and Austin Solomon.
+
+
 Copyright and License
 ---------------------
 Code and documentation copyright 2014 ViaSat, Inc. Code is released under [the
-Apache 2.0 license](LICENSE). Documentation is released under [Creative
-Commons](docs/LICENSE).
+Apache 2.0 license](LICENSE).
