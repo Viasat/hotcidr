@@ -3,31 +3,30 @@ import argparse
 import datetime
 import os
 from hotcidr.apply import *
- 
+
 if __name__ == "__main__":
+    current = datetime.datetime.now()
+    currStr = str(current).rstrip('datetime.datetime')
+    finalStr = str(currStr[:19])
 
-   current = datetime.datetime.now()
-   currStr = str(current).rstrip('datetime.datetime')
-   finalStr = str(currStr[:19])
+    print '\n\n*********************** Beginning hc-apply run at %s**********************\n' % finalStr
 
-   print '\n\n*********************** Beginning hc-apply run at %s**********************\n' % finalStr 
+    #clean up current directory
+    if os.path.isdir('AWS_out') or os.path.isdir('hotcidr'):
+        print 'Cleaning up current directory'
+        deleteLocalRepos()
 
-   #clean up current directory
-   if os.path.isdir('AWS_out') or os.path.isdir('hotcidr'):
-      print 'Cleaning up current directory'
-      deleteLocalRepos()
+    #parse command line arguments
+    parser = argparse.ArgumentParser(description="Keep AWS consistent with corresponding Git Repository")
+    parser.add_argument('git_repo', help='Git Repository AWS is based on\n')
+    args = vars(parser.parse_args())
 
-   #parse command line arguments
-   parser = argparse.ArgumentParser(description="Keep AWS consistent with corresponding Git Repository")
-   parser.add_argument('git_repo', help='Git Repository AWS is based on\n')
-   args = vars(parser.parse_args())
+    args['git_repo'], is_clone_url = gitlib.get_valid_repo(args['git_repo'])
 
-   args['git_repo'], is_clone_url = gitlib.get_valid_repo(args['git_repo'])
+    main(args['git_repo'], is_clone_url)
 
-   main(args['git_repo'], is_clone_url) 
+    current = datetime.datetime.now()
+    currStr = str(current).rstrip('datetime.datetime')
+    finalStr = str(currStr[:19])
 
-   current = datetime.datetime.now()
-   currStr = str(current).rstrip('datetime.datetime')
-   finalStr = str(currStr[:19])
-
-   print '\n\n*********************** Ending hc-apply run at %s**********************\n' % finalStr
+    print '\n\n*********************** Ending hc-apply run at %s**********************\n' % finalStr

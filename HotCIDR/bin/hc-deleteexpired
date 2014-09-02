@@ -6,10 +6,10 @@ from hotcidr.deleteexpired import main
 
 parser = argparse.ArgumentParser(description='Create audit output')
 
-parser.add_argument('repo', help='Input git directory, or git clone URL. If a clone url is specified, the directory will be cloned to <hc-create-audit directory>/' + GIT_REPO_DIR + '/<git name>, and read from there.')
+parser.add_argument('repo',
+                    help='Input git directory, or git clone URL. If a URL is specified, the repo will be cloned to <hc-create-audit directory>/' + GIT_REPO_DIR + '/<git name>, and read from there.')
 parser.add_argument('--dont-push', help='Don\'t push changes - just commit them locally.', action='store_true')
 parser.add_argument('--silence', help='Don\'t print progress and groups processed', action='store_true')
 args = vars(parser.parse_args())
 
 main(args['repo'], args['dont_push'], args['silence'])
-

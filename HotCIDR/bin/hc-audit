@@ -12,7 +12,7 @@ parser.add_argument('repo', help='Input git directory, or git clone URL. If a cl
 parser.add_argument('--from-time', help='Include events from this timestamp until the specified to-date')
 parser.add_argument('--to-time', help='Include events up until this timestamp starting from the specified from-date')
 parser.add_argument('--output', help='Output audit at the absolute path. E.G. /home/user/output.txt.')
-parser.add_argument('--output-webserver', help='Format output for the webserver, in CSV format', action='store_true') 
+parser.add_argument('--output-webserver', help='Format output for the webserver, in CSV format', action='store_true')
 parser.add_argument('--group', help='Audit only the specified group')
 parser.add_argument('--sort-chronologically', help='Sort the audit output chronologically, rather than by action', action='store_true')
 parser.add_argument('--keep-repo', help='Do not remove temporary repo after audit script finishes', action='store_true')
