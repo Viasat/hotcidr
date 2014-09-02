@@ -10,7 +10,7 @@ setup(
     #url='http://pypi.python.org/pypi/HotCIDR',
     license='LICENSE.txt',
     description="Firewall rule management and automation tools",
-    long_description=open('README.txt').read(),
+    #long_description=open('README.txt').read(),
     install_requires=[
         "GitPython >= 0.1.7",
         "MySQL-python >= 1.2.5",
