@@ -26,6 +26,8 @@ if __name__ == "__main__":
    args = vars(parser.parse_args())
 
    args['git_repo'], is_clone_url = gitlib.get_valid_repo(args['git_repo'])
+   if not args['git_repo']:
+      return 1
 
    main(args['git_repo'], is_clone_url, str(args['aws_region']), str(args['aws_access_key_id']), str(args['aws_secret_access_key']))
 
