@@ -4,9 +4,7 @@ import git
 import hotcidr.state
 import hashlib
 import requests, json
-from requests import Session, Request
 from shutil import rmtree
-import subprocess
 import fetchvpc
 import yaml
 
@@ -322,7 +320,7 @@ def get_added_deleted_rules( git_dir, yamlfile ):
             #Past version of the yaml file had a formatting error
             except yaml.scanner.ScannerError:
                 continue
-            except TypeError as e:
+            except TypeError:
                 continue
 
             rules = rules['rules']
@@ -387,6 +385,6 @@ def remove_git_repo():
     try:
         rmtree(GIT_REPO_DIR)
     except OSError:
-        print('Error: ' + args['input'] + ' was not successfully deleted. Check permissions.', file=sys.stderr)
+        print('Error: ' + GIT_REPO_DIR + ' was not successfully deleted. Check permissions.', file=sys.stderr)
         return 1
 

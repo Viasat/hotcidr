@@ -381,10 +381,6 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
 
             approved_authdate = {} #For debugging, to make mistakes obvious
 
-            #For debugging, to make mistakes obvious
-            createdby = createdon = approvedby = approvedon = 'n/a' 
-            approved_authdate = {}
-
         #Get per-group rules that are deleted (existed in a past version of the yaml file)
         if not args['output_webserver'] and not args['sort_chronologically']:
             output_str += 'Rules deleted:\n'

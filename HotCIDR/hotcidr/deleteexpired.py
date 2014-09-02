@@ -1,5 +1,4 @@
 from __future__ import print_function
-import argparse
 import os, sys, time
 import git
 import hotcidr.state
@@ -57,11 +56,9 @@ def main(repo = None, dont_push = None, silence = None):
             continue
 
         added_rules = gitlib.get_added_deleted_rules( args['repo'], groups[group] )['added']
-        remove_rules = []
         rules_removed = False
 
         for added_rule in added_rules:
-            remove_rule = False
 
             #Handle expirations.yaml: add expiration field to all matching rules
             if expirations:
@@ -128,6 +125,6 @@ def main(repo = None, dont_push = None, silence = None):
 
     #Remove temporary git repo
     if is_git_repo:
-        remove_git_repo()
+        gitlib.remove_git_repo()
 
     return 0
