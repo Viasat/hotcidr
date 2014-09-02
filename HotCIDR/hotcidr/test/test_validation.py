@@ -188,7 +188,7 @@ class TestValidateAWSGroupID(TestCase):
                 'id': 'sg-34567890'
             },
             'group2': {
-                'id': 'sg-4567890a'
+                'id': 'sg-34567890'
             }
         }
         self.v.expect_fatal("group1 has a duplicate AWS group ID")
