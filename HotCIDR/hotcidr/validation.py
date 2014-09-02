@@ -111,7 +111,7 @@ def validate_groups(self):
     used = set(itertools.chain(*(b['groups'] for b in self.boxes.values()
                                              if 'groups' in b)))
     for g in used - set(self.groups.keys()):
-        self.fatal("%s is not defined in groups.yaml" % g)
+        self.fatal("%s is not defined" % g)
 
 @requires(load_groups)
 def validate_group_names(self):
