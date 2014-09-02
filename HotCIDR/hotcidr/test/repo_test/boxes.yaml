@@ -1,0 +1,7 @@
+i-0123abcd:
+  domain: test.com
+  groups:
+  - test1
+  ip: 192.168.0.1
+  tags:
+    Name: instance1
