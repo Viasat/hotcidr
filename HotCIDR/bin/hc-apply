@@ -3,30 +3,34 @@ import argparse
 import datetime
 import os
 from hotcidr.apply import *
-
+ 
 if __name__ == "__main__":
-    current = datetime.datetime.now()
-    currStr = str(current).rstrip('datetime.datetime')
-    finalStr = str(currStr[:19])
 
-    print '\n\n*********************** Beginning hc-apply run at %s**********************\n' % finalStr
+   current = datetime.datetime.now()
+   currStr = str(current).rstrip('datetime.datetime')
+   finalStr = str(currStr[:19])
 
-    #clean up current directory
-    if os.path.isdir('AWS_out') or os.path.isdir('hotcidr'):
-        print 'Cleaning up current directory'
-        deleteLocalRepos()
+   print '\n\n*********************** Beginning hc-apply run at %s**********************\n' % finalStr 
 
-    #parse command line arguments
-    parser = argparse.ArgumentParser(description="Keep AWS consistent with corresponding Git Repository")
-    parser.add_argument('git_repo', help='Git Repository AWS is based on\n')
-    args = vars(parser.parse_args())
+   #clean up current directory
+   if os.path.isdir('AWS_out') or os.path.isdir('hotcidr'):
+      print 'Cleaning up current directory'
+      deleteLocalRepos()
 
-    args['git_repo'], is_clone_url = gitlib.get_valid_repo(args['git_repo'])
+   #parse command line arguments
+   parser = argparse.ArgumentParser(description="Keep AWS consistent with corresponding Git Repository")
+   parser.add_argument('git_repo', help='Git Repository AWS is based on\n')
+   parser.add_argument('aws_region' , help= 'AWS region name\n')
+   parser.add_argument('aws_access_key_id', help='AWS Access Key Id\n')
+   parser.add_argument('aws_secret_access_key', help='AWS Secret Access Key\n')
+   args = vars(parser.parse_args())
 
-    main(args['git_repo'], is_clone_url)
+   args['git_repo'], is_clone_url = gitlib.get_valid_repo(args['git_repo'])
 
-    current = datetime.datetime.now()
-    currStr = str(current).rstrip('datetime.datetime')
-    finalStr = str(currStr[:19])
+   main(args['git_repo'], is_clone_url, str(args['aws_region']), str(args['aws_access_key_id']), str(args['aws_secret_access_key']))
 
-    print '\n\n*********************** Ending hc-apply run at %s**********************\n' % finalStr
+   current = datetime.datetime.now()
+   currStr = str(current).rstrip('datetime.datetime')
+   finalStr = str(currStr[:19])
+
+   print '\n\n*********************** Ending hc-apply run at %s**********************\n' % finalStr

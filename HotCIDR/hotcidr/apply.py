@@ -372,15 +372,15 @@ def deleteLocalRepos():
         print answer
         p.stdin.flush()
  
-def main(masterRepo, is_clone_url):
+def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
 
-   connection = boto.ec2.connect_to_region("us-west-2")
+   connection = boto.ec2.connect_to_region(awsRegion, aws_access_key_id= awsId, aws_secret_access_key = awsPword)
    securityGroups = connection.get_all_security_groups()
    
    print 'Updating AWS environment to reflect current security groups\n'
 
    #fetches all of the AWS security groups and outputs .yaml files for each in AWS_out dir
-   fetchvpc.main('us-west-2','AWS_out')
+   fetchvpc.main(awsRegion,'AWS_out')
 
    #fetches all of the ec2 instances and outputs .yaml files to access their security groups
    openBoxesAWS = open(os.path.join('AWS_out','boxes.yaml'), 'rU')
@@ -428,7 +428,7 @@ def main(masterRepo, is_clone_url):
                    addYaml['id'] = each.id
                    with open(os.path.join(masterRepo, groupsYaml[str(eachGroup).rstrip('.yaml')]), 'w') as outfile: 
                         outfile.write(yaml.dump(addYaml, default_flow_style=False))
-           #to add security group -> must add associations to boxes.yaml 1) adds groups 2) does association 3) should populate      
+          #to add security group -> must add associations to boxes.yaml 1) adds groups 2) does association 3) should populate      
           except: 
             print '\nError authorizing security group %s into AWS Network, continuing script...' % eachGroup
             continue
@@ -464,7 +464,7 @@ def main(masterRepo, is_clone_url):
    print 'Updating AWS security groups to reflect current rules in Git repository\n'  
  
    #fetches all of the AWS security groups and outputs .yaml files for each in AWS_out dir
-   fetchvpc.main('us-west-2','AWS_out')
+   fetchvpc.main(awsRegion,'AWS_out')
 
    #fetches all of the ec2 instances and outputs .yaml files to access their security groups
    openBoxesAWS = open(os.path.join('AWS_out', 'boxes.yaml'), 'rU')
