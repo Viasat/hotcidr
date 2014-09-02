@@ -192,16 +192,11 @@ def get_valid_repo( repo ):
 
         #If the repo can't be cloned at this point, it's because there is already one at gitrepo_location
         new_full_path = os.path.join(gitrepo_location, new_repo_path)
-        try:
-            git.Repo.clone_from(repo, new_full_path)
-        except:
-            var = raw_input('Warning: A repo already exists at \"' + new_full_path + '\". Delete it? (y/n) ')
-            if var == 'y':
-                rmtree(new_full_path)
-                git.Repo.clone_from(repo, new_full_path)
-            else:
-                return None, None
-
+        
+        if os.path.exists(new_full_path):
+            rmtree(new_full_path)
+        git.Repo.clone_from(repo, new_full_path)
+        
         repo = new_repo_path
 
     #If the repo is a directory, check that it is a git repo
