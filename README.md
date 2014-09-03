@@ -55,7 +55,11 @@ See [README](audit-webapp/README.md)
 Fetch the VPC
 
 ```
-% hc-fetch-amazon fw_rules
+% hc-fetch <vpc-region-code> <output-directory> --aws-access-key-id AWS_ACCESS_KEY_ID --aws-secret-access-key AWS_SECRET_ACCESS_KEY
+
+e.g.
+% hc-fetch us-west-2 ./us-west-2-core --aws-access-key-id AWS_ACCESS_KEY_ID --aws-secret-access-key AWS_SECRET_ACCESS_KEY
+
 ```
 
 Setup as git repository
@@ -84,7 +88,7 @@ Setup cronjob for hc-apply to run in background (script runs on interval in back
 
 Documentation
 -------------
-TBD :/
+TBD
 
 
 Authors
