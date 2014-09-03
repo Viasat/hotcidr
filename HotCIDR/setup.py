@@ -12,7 +12,7 @@ setup(
     description="Firewall rule management and automation tools",
     #long_description=open('README.txt').read(),
     install_requires=[
-        "GitPython >= 0.1.7",
+        "GitPython >= 0.3.2",
         "MySQL-python >= 1.2.5",
         "PyYAML >= 3.10",
         "boto >= 2.31.1",
