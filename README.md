@@ -85,7 +85,7 @@ Setup cronjob for hc-apply to run in background (script runs on interval in back
 
 3. Script will maintain consistency between GitRepository and AWS while logging output in "applyLog"
 
-NOTE: Apply will not enforce a rule if it belongs to a security-group which is not associated with an instance, or if the rule is incorrectly formatted.
+NOTE: Apply will not update security-groups that are not associated with an instance, nor rules that are incorrectly formatted.
 
 
 Authors
