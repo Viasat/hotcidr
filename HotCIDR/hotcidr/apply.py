@@ -409,7 +409,7 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
    print 'Updating AWS environment to reflect current security groups\n'
 
    #fetches all of the AWS security groups and outputs .yaml files for each in AWS_out dir
-   fetchvpc.main(awsRegion,'AWS_out')
+   fetchvpc.main(awsRegion,'AWS_out', access_id = awsID, access_key = awsPword)
 
    #fetches all of the ec2 instances and outputs .yaml files to access their security groups
    openBoxesAWS = open(os.path.join('AWS_out','boxes.yaml'), 'rU')
@@ -497,7 +497,7 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
    print 'Updating AWS security groups to reflect current rules in Git repository\n'  
  
    #fetches all of the AWS security groups and outputs .yaml files for each in AWS_out dir
-   fetchvpc.main(awsRegion,'AWS_out')
+   fetchvpc.main(awsRegion,'AWS_out', access_id = awsID, access_key = awsPword)
 
    #fetches all of the ec2 instances and outputs .yaml files to access their security groups
    openBoxesAWS = open(os.path.join('AWS_out', 'boxes.yaml'), 'rU')
