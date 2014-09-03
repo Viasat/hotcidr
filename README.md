@@ -10,7 +10,6 @@ Table of Contents
 
  - [Workflows](#workflow)
  - [Setup](#setup)
- - [Documentation](#documentation)
  - [Authors](#authors)
  - [Copyright and license](#copyright-and-license)
 
