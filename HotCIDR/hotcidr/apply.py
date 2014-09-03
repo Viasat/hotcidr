@@ -444,10 +444,9 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
    for eachInstance in connection.get_only_instances():
       newAssoc = []
       if str(eachInstance.id) not in gitInstances: 
-         print 'This instance does not exist in the git repository: %s' % str(eachInstance.id) 
-         continue
+         sys.exit(1)
       for eachG in gitInstances[str(eachInstance.id)]['groups']:
-          newAssoc.append(secGroupIDs[str(eachG)])
+          newAssoc.append(secGroupIDs[str(eachG).replace('-', '')])
       connection.modify_instance_attribute(eachInstance.id, 'groupSet', newAssoc, dry_run=False)
   
    for eachGroup in secGroupsAWS:
