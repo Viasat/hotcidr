@@ -1,4 +1,5 @@
 #!/usr/bin/python
+#server
 import time
 import sys
 import datetime
