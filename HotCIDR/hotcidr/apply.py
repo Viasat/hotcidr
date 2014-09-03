@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 import time
 import sys
 import datetime
@@ -16,6 +15,12 @@ from hotcidr import fetchvpc
 from hotcidr import notifyemail
 from hotcidr import modifydatabase
 from hotcidr import gitlib
+
+sum_rulesAuth = 0 
+sum_rulesRev = 0 
+sum_secGroupAuth = 0 
+sum_secGroupRev = 0 
+
 
 def is_number(num):
     try:
@@ -67,6 +72,8 @@ def cleanGroupAndDelete(secGroup):
 # function revokes any security rule that was improperly entered directly into AWS
 def revokeFromAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups):
    print '\n\n\nRevoking rules from AWS that are not consistent with the Git: '
+
+   global sum_rulesRev
 
    #load yaml into python dictionaryies
    awsYaml = gitlib.get_groups_dict('AWS_out')
@@ -200,6 +207,8 @@ def revokeFromAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups
                                     + '\nlocation: ' + str(awsVal['location'])
                                     + '\ndescription: ' + str(awsVal['description']) + '\n'
                             )
+                      
+                            sum_rulesRev = sum_rulesRev + 1
                             mySQLdict = { 'groupID' : eachGroup.id,
                                           'modifiedGroup': groupBeingExamined,
                                           'direction': awsVal['direction'],
@@ -222,6 +231,8 @@ def revokeFromAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups
 def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_clone_url):
     print '\n\n\nNow populating AWS with any missing rules from the Git: '
  
+    global sum_rulesAuth
+    
     awsYaml = gitlib.get_groups_dict('AWS_out')
 
     checkSecGroups = []
@@ -343,6 +354,8 @@ def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_
                                         + '\nlocation: ' + str(gitVal['location'])
                                         + '\ndescription: ' + str(gitVal['description']) + '\n'
                                       )
+
+                             sum_rulesAuth = sum_rulesAuth + 1
                              #add new or restored rule to mySQL database
                              mySQLdict = { 'groupID':eachGroup.id,
                                            'modifiedGroup':groupBeingExamined,
@@ -376,7 +389,12 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
 
    connection = boto.ec2.connect_to_region(awsRegion, aws_access_key_id= awsId, aws_secret_access_key = awsPword)
    securityGroups = connection.get_all_security_groups()
-   
+
+   global sum_secGroupAuth
+   global sum_secGroupRev
+   global sum_rulesAuth
+   global sum_rulesRev 
+ 
    print 'Updating AWS environment to reflect current security groups\n'
 
    #fetches all of the AWS security groups and outputs .yaml files for each in AWS_out dir
@@ -429,6 +447,7 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
                    with open(os.path.join(masterRepo, groupsYaml[str(eachGroup).rstrip('.yaml')]), 'w') as outfile: 
                         outfile.write(yaml.dump(addYaml, default_flow_style=False))
           #to add security group -> must add associations to boxes.yaml 1) adds groups 2) does association 3) should populate      
+            sum_secGroupAuth = sum_secGroupAuth + 1
           except: 
             print '\nError authorizing security group %s into AWS Network, continuing script...' % eachGroup
             continue
@@ -458,6 +477,7 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
                     eachG.delete()
                  except:
                     cleanGroupAndDelete(eachG)
+                 sum_secGroupRev = sum_secGroupRev + 1  
   
    securityGroups = connection.get_all_security_groups()
 
@@ -478,4 +498,6 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
 
    deleteLocalRepos()
    if is_clone_url:
-      gitlib.remove_git_repo()   
+      gitlib.remove_git_repo()  
+
+   print '%s Groups Added, %s Groups Revoked, %s Rules Added, %s Rules Revoked' % (sum_secGroupAuth, sum_secGroupRev, sum_rulesAuth, sum_rulesRev)
