@@ -55,7 +55,7 @@ See [README](audit-webapp/README.md)
 Fetch the VPC
 
 ```
-% hc-fetch-amazon fw_rules
+% hc-fetch fw_rules
 ```
 
 Setup as git repository
@@ -84,7 +84,7 @@ Setup cronjob for hc-apply to run in background (script runs on interval in back
 
 Documentation
 -------------
-TBD :/
+TBD
 
 
 Authors
