@@ -4,10 +4,12 @@ rules:
 - description: no description
   direction: inbound
   protocol: tcp
-  location: 192.168.0.2
+  location: 192.168.0.2/32
   ports: 443
+  justification: because
 - description: no description
   direction: inbound
   protocol: tcp
-  location: 192.168.0.3
+  location: 192.168.0.3/32
   ports: 443
+  justification: because
