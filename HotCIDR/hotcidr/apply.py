@@ -24,7 +24,7 @@ def is_number(num):
     except ValueError:
         return False
 
-def cleanGroupAndDelete(secGroup):
+def cleanGroupAndDelete(connection, secGroup, securityGroups):
     #delete all security rules to be allow deleting group without dependent object error
     print 'Cleaning group to be deleted  %s' % secGroup.name
     for group in securityGroups:
@@ -97,7 +97,7 @@ def revokeFromAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups
            for aK, aV in awsRulesIter.iteritems():
                if aK == 'rules':
                   for eachElem in aV:
-                      mustHaveFollowingKeys = { 'direction', 'protocol', 'description', 'ports','location'}
+                      mustHaveFollowingKeys = [ 'direction', 'protocol', 'description', 'ports','location' ]
                       if not all(key in eachElem for key in mustHaveFollowingKeys):
                          continue
 
@@ -380,7 +380,7 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
    print 'Updating AWS environment to reflect current security groups\n'
 
    #fetches all of the AWS security groups and outputs .yaml files for each in AWS_out dir
-   fetchvpc.main(awsRegion,'AWS_out')
+   fetchvpc.main(awsRegion, output = 'AWS_out', access_id = awsId, access_key = awsPword)
 
    #fetches all of the ec2 instances and outputs .yaml files to access their security groups
    openBoxesAWS = open(os.path.join('AWS_out','boxes.yaml'), 'rU')
@@ -443,6 +443,9 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
 
    for eachInstance in connection.get_only_instances():
       newAssoc = []
+      if not str(eachInstance.id) in gitInstances:
+          continue
+
       for eachG in gitInstances[str(eachInstance.id)]['groups']:
           newAssoc.append(secGroupIDs[str(eachG)])
       connection.modify_instance_attribute(eachInstance.id, 'groupSet', newAssoc, dry_run=False)
@@ -455,7 +458,7 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
                  try: 
                     eachG.delete()
                  except:
-                    cleanGroupAndDelete(eachG)
+                    cleanGroupAndDelete(connection, eachG, securityGroups)
   
    securityGroups = connection.get_all_security_groups()
 
