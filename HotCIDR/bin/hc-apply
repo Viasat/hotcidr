@@ -32,8 +32,3 @@ if __name__ == "__main__":
 
    main(args['git_repo'], is_clone_url, str(args['aws_region']), str(args['aws_access_key_id']), str(args['aws_secret_access_key']))
 
-   current = datetime.datetime.now()
-   currStr = str(current).rstrip('datetime.datetime')
-   finalStr = str(currStr[:19])
-
-   print '\n\n*********************** Ending hc-apply run at %s**********************\n' % finalStr

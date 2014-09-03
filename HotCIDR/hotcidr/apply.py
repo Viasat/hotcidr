@@ -146,6 +146,7 @@ def revokeFromAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups
                       hash.update(identifier)
                       gitRulesComp[str(hash.digest())] = eachElem
 
+
            #iterates through each associated security group checking if both dicts have each rules' unique identifier
            #perform actual check of AWS against the Git to see any inconsistencies
            for awsKey, awsVal in awsRulesComp.iteritems():
@@ -238,8 +239,11 @@ def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_
     checkSecGroups = []
  
     for key,val in ec2Instances.iteritems():
+        print 'key %s, val %s' % (key, val)
         for eachSecGroup in val['groups']:
             if eachSecGroup in checkSecGroups:
+               print 'continunig %s' % eachSecGroup
+               print 'checkSecGroups %s' % checkSecGroups 
                continue
             else:
                checkSecGroups.append(eachSecGroup)
@@ -261,9 +265,11 @@ def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_
                    for eachElem in aV:
                        mustHaveFollowingKeys = { 'direction', 'protocol', 'description', 'ports','location'}
                        if not all(key in eachElem for key in mustHaveFollowingKeys):
+                          print 'CONT1'
                           continue
                        if not hasattr(eachElem['ports'], 'toport') or not hasattr(eachElem['ports'], 'fromport'):
-                         continue
+                          print 'CONT2'
+                          continue
  
                        identifier = (str(eachElem['direction'])
                                      + str(eachElem['protocol'])
@@ -282,9 +288,11 @@ def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_
                    for eachElem in gV:
                        mustHaveFollowingKeys = { 'direction', 'protocol', 'description', 'ports','location'}
                        if not all(key in eachElem for key in mustHaveFollowingKeys):
+                          print 'CONT3'
                           continue
                        if not hasattr(eachElem['ports'], 'toport') or not hasattr(eachElem['ports'], 'fromport'):
-                         continue
+                          print 'CONT4'
+                          continue
  
                        identifier = (str(eachElem['direction'])
                                      + str(eachElem['protocol'])
@@ -298,8 +306,9 @@ def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_
                        gitRulesComp[str(hash.digest())] = eachElem
           
             for gitKey, gitVal in gitRulesComp.iteritems():
+                print 'gitkey %s gitVal %s' % (gitKey, gitVal)
                 if gitKey not in awsRulesComp.keys():
-                   #print 'gitkey %s gitVal %s' % (gitKey, gitVal)
+                   print 'gitkey %s gitVal %s' % (gitKey, gitVal)
                    for eachGroup in securityGroups:
                        if eachGroup.name == groupBeingExamined.rstrip('.yaml'):
                              if is_number(gitVal['protocol']):
@@ -499,5 +508,13 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
    deleteLocalRepos()
    if is_clone_url:
       gitlib.remove_git_repo()  
+
+   current = datetime.datetime.now()
+   currStr = str(current).rstrip('datetime.datetime')
+   finalStr = str(currStr[:19])
+
+   print '\n\n*********************** Ending hc-apply run at %s**********************\n' % finalStr
+
+
 
    print '%s Groups Added, %s Groups Revoked, %s Rules Added, %s Rules Revoked' % (sum_secGroupAuth, sum_secGroupRev, sum_rulesAuth, sum_rulesRev)
