@@ -224,10 +224,12 @@ def revokeFromAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups
 
                             #add to mySQL Database
                             modifydatabase.modifyTable(mySQLdict)
-
-                            #generate notification for improperly added rule (bypassing Git)
-                            notifyemail.notifyGitBypass(mySQLdict)
-
+                            try:
+                                #generate notification for improperly added rule (bypassing Git)
+                                notifyemail.notifyGitBypass(mySQLdict)
+                            except: 
+                                print 'No server entered for SMTP'
+                                continue 
 
 def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_clone_url):
     print '\n\n\nNow populating AWS with any missing rules from the Git: '
@@ -378,7 +380,6 @@ def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_
                                            'justification' : 'none'
                                          }
                              modifydatabase.modifyTable(mySQLdict)
-                             #notifyGitBypass(mySQLdict)
  
 #delete local copies of AWS and Git repositories
 def deleteLocalRepos():
@@ -445,7 +446,7 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
    for eachGroup in secGroupsMaster:
        if eachGroup not in secGroupsAWS:
           #group in master thats not in aws --> should be added
-          try:
+          #try:
             print '\nAuthorizing following security group from master repository: %s' % eachGroup
             connection.create_security_group(str(eachGroup).rstrip('.yaml'), 'no description')
             openAdd = open(os.path.join(masterRepo, groupsYaml[str(eachGroup).rstrip('.yaml')]), 'rU')
@@ -457,9 +458,9 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
                         outfile.write(yaml.dump(addYaml, default_flow_style=False))
           #to add security group -> must add associations to boxes.yaml 1) adds groups 2) does association 3) should populate      
             sum_secGroupAuth = sum_secGroupAuth + 1
-          except: 
-            print '\nError authorizing security group %s into AWS Network, continuing script...' % eachGroup
-            continue
+          #except: 
+          #  print '\nError authorizing security group %s into AWS Network, continuing script...' % eachGroup
+          #  continue
 
    securityGroups = connection.get_all_security_groups() 
    secGroupIDs = {}
