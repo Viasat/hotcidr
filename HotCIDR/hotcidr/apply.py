@@ -241,11 +241,11 @@ def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_
     checkSecGroups = []
  
     for key,val in ec2Instances.iteritems():
-        print 'key %s, val %s' % (key, val)
+        #print 'key %s, val %s' % (key, val)
         for eachSecGroup in val['groups']:
             if eachSecGroup in checkSecGroups:
-               print 'continunig %s' % eachSecGroup
-               print 'checkSecGroups %s' % checkSecGroups 
+               #print 'continunig %s' % eachSecGroup
+               #print 'checkSecGroups %s' % checkSecGroups 
                continue
             else:
                checkSecGroups.append(eachSecGroup)
@@ -267,10 +267,10 @@ def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_
                    for eachElem in aV:
                        mustHaveFollowingKeys = { 'direction', 'protocol', 'description', 'ports','location'}
                        if not all(key in eachElem for key in mustHaveFollowingKeys):
-                          print 'CONT1'
+                          #print 'CONT1'
                           continue
                        if not hasattr(eachElem['ports'], 'toport') or not hasattr(eachElem['ports'], 'fromport'):
-                          print 'CONT2'
+                          #print 'CONT2'
                           continue
  
                        identifier = (str(eachElem['direction'])
@@ -290,10 +290,10 @@ def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_
                    for eachElem in gV:
                        mustHaveFollowingKeys = { 'direction', 'protocol', 'description', 'ports','location'}
                        if not all(key in eachElem for key in mustHaveFollowingKeys):
-                          print 'CONT3'
+                          #print 'CONT3'
                           continue
                        if not hasattr(eachElem['ports'], 'toport') or not hasattr(eachElem['ports'], 'fromport'):
-                          print 'CONT4'
+                          #print 'CONT4'
                           continue
  
                        identifier = (str(eachElem['direction'])
@@ -308,9 +308,9 @@ def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_
                        gitRulesComp[str(hash.digest())] = eachElem
           
             for gitKey, gitVal in gitRulesComp.iteritems():
-                print 'gitkey %s gitVal %s' % (gitKey, gitVal)
+                #print 'gitkey %s gitVal %s' % (gitKey, gitVal)
                 if gitKey not in awsRulesComp.keys():
-                   print 'gitkey %s gitVal %s' % (gitKey, gitVal)
+                   #print 'gitkey %s gitVal %s' % (gitKey, gitVal)
                    for eachGroup in securityGroups:
                        if eachGroup.name == groupBeingExamined.rstrip('.yaml'):
                              if is_number(gitVal['protocol']):
