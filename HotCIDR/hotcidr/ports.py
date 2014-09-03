@@ -2,15 +2,18 @@ def parse(s):
     try:
         return Port(int(s))
     except ValueError:
-        start, _, end = s.partition('-')
-        return Port(start, end)
+        if s == "all":
+            return Port(None)
+        else:
+            start, _, end = s.partition('-')
+            return Port(int(start), int(end))
 
 
 class Port(object):
     def __init__(self, fromport, toport=None):
-        self._fromport = int(fromport)
+        self._fromport = fromport
         if toport:
-            self._toport = int(toport)
+            self._toport = toport
         else:
             self._toport = fromport
 
@@ -23,10 +26,10 @@ class Port(object):
         return self._toport
 
     def yaml_str(self):
-        if self.fromport < self.toport:
+        if self.fromport == None and self.toport == None:
+            return "all"
+        elif self.fromport < self.toport:
             return "%d-%d" % (self.fromport, self.toport)
-        elif self.fromport == self.toport:
-            return self.fromport
         else:
             return self.fromport
 
