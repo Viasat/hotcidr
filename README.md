@@ -75,7 +75,8 @@ fw_rules% git push -u origin master
 
 
 ### Automatic rule application (TODO)
-Setup cronjob for hc-apply to run in background (script runs on interval in background) 
+Setup cronjob for hc-apply to run in background (script runs on interval in background)
+
 1. Run `crontab -e` in unix shell to open up cronjob config file
    
 2. Add following line to end of cronjob config file (15 signifies script will run every 15 minutes)
@@ -83,7 +84,7 @@ Setup cronjob for hc-apply to run in background (script runs on interval in back
     SHELL=/bin/bash
     */15 * * * * cd ~/hotcidr/HotCIDR/bin/; hc-apply GITURL >> ~/hotcidr/HotCIDR/applyLog/log\_apply
 
-3. Script will maintain consistency between GitRepository and AWS while logging output in "applyLog"
+This script will maintain consistency between GitRepository and AWS while logging output in "applyLog".
 
 NOTE: Apply will not update security-groups that are not associated with an instance, nor rules that are incorrectly formatted.
 
@@ -95,5 +96,4 @@ This code was initially written by Justin Bass, James Kwan, and Austin Solomon.
 
 Copyright and License
 ---------------------
-Code and documentation copyright 2014 ViaSat, Inc. Code is released under [the
-Apache 2.0 license](LICENSE).
+Code and documentation copyright 2014 ViaSat, Inc. Code is released under [the Apache 2.0 license](LICENSE).
