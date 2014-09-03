@@ -91,7 +91,7 @@ NOTE: Apply will not update security-groups that are not associated with an inst
 
 Authors
 -------
-This code was initially written by Justin Bass, James Kwan, and Austin Solomon.
+This code was initially written by [Justin Bass](justinalanbass.com), James Kwan, and Austin Solomon.
 
 
 Copyright and License
