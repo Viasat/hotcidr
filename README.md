@@ -10,6 +10,7 @@ Table of Contents
 
  - [Workflows](#workflow)
  - [Setup](#setup)
+ - [Documentation Notes](#documentation-notes)
  - [Authors](#authors)
  - [Copyright and license](#copyright-and-license)
 
@@ -85,7 +86,17 @@ Setup cronjob for hc-apply to run in background (script runs on interval in back
 
 This script will maintain consistency between GitRepository and AWS while logging output in "applyLog".
 
-NOTE: Apply will not update security-groups that are not associated with an instance, nor rules that are incorrectly formatted.
+Documentation Notes
+-------
+### Apply
+Apply will not update security-groups that are not associated with an instance, nor rules that are incorrectly formatted.
+
+### Audit Webapp
+Auditing can be done from the [auditing webapp](audit-webapp/README.md), or from the command line where HotCIDR is installed:
+
+    hc-audit <repo>
+
+The <repo> can be either a local git repository (a local directory) or a remote git repository (a git url, either https or ssh).
 
 
 Authors
