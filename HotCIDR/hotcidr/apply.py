@@ -304,7 +304,7 @@ def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_
                                                                        from_port = gitVal['ports'].fromport,
                                                                        to_port = gitVal['ports'].toport,
                                                                        src_security_group_group_id = gitVal['location'],
-                                                                       group_id = eachGroup.id
+                                                                       #group_id = eachGroup.id
                                                                       )
                                 else:
                                     #authorize inbound with source CIDR IP
@@ -313,7 +313,7 @@ def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_
                                                                        from_port = gitVal['ports'].fromport,
                                                                        to_port = gitVal['ports'].toport,
                                                                        cidr_ip = gitVal['location'],
-                                                                       group_id = eachGroup.id
+                                                                       #group_id = eachGroup.id
                                                                       )
  
                              else:
@@ -443,6 +443,9 @@ def main(masterRepo, is_clone_url, awsRegion,  awsId, awsPword):
 
    for eachInstance in connection.get_only_instances():
       newAssoc = []
+      if str(eachInstance.id) not in gitInstances: 
+         print 'This instance does not exist in the git repository: %s' % str(eachInstance.id) 
+         continue
       for eachG in gitInstances[str(eachInstance.id)]['groups']:
           newAssoc.append(secGroupIDs[str(eachG)])
       connection.modify_instance_attribute(eachInstance.id, 'groupSet', newAssoc, dry_run=False)
