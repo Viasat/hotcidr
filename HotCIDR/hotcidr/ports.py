@@ -14,6 +14,8 @@ def parse(s):
 
 class Port(object):
     def __init__(self, fromport, toport=None):
+        assert(isinstance(fromport, int))
+        assert(isinstance(toport, int))
         self._fromport = fromport
         if toport:
             self._toport = toport
