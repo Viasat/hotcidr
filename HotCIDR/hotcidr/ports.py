@@ -6,7 +6,10 @@ def parse(s):
             return Port(None)
         else:
             start, _, end = s.partition('-')
-            return Port(int(start), int(end))
+            try:
+                return Port(int(start), int(end))
+            except ValueError:
+                return None
 
 
 class Port(object):
@@ -25,8 +28,12 @@ class Port(object):
     def toport(self):
         return self._toport
 
+    @property
+    def all(self):
+        return self.fromport == None and self.toport == None
+
     def yaml_str(self):
-        if self.fromport == None and self.toport == None:
+        if self.all:
             return "all"
         elif self.fromport < self.toport:
             return "%d-%d" % (self.fromport, self.toport)

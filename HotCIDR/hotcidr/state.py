@@ -7,9 +7,10 @@ def load(f):
         for rule in r['rules']:
             if 'ports' in rule:
               p = ports.parse(rule['ports'])
-              rule['ports'] = p
-              rule['fromport'] = p.fromport or -1
-              rule['toport'] = p.toport or -1
+              if p:
+                  rule['ports'] = p
+                  rule['fromport'] = p.fromport or -1
+                  rule['toport'] = p.toport or -1
     return r
 
 def dump(s, default_flow_style = True):
