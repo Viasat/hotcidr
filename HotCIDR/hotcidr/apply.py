@@ -22,14 +22,6 @@ sum_rulesRev = 0
 sum_secGroupAuth = 0
 sum_secGroupRev = 0
 
-
-def is_number(num):
-    try:
-        int(num)
-        return True
-    except ValueError:
-        return False
-
 def cleanGroupAndDelete(secGroup):
     #delete all security rules to be allow deleting group without dependent object error
     print 'Cleaning group to be deleted  %s' % secGroup.name
@@ -156,7 +148,7 @@ def revokeFromAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups
                     #if not, find group being examined and revoke the rule
                     for eachGroup in securityGroups:
                         if eachGroup.name == groupBeingExamined.rstrip('.yaml') :
-                            if is_number(awsVal['protocol']):
+                            if isinstance(awsVal['protocol'], int):
                                 awsVal['ports'].fromport = None
                                 awsVal['ports'].toport = None
                             if awsVal['protocol'] == 'all':
@@ -314,7 +306,7 @@ def addToAWSBasedOnGit(connection, ec2Instances, masterRepo, securityGroups, is_
                     #print 'gitkey %s gitVal %s' % (gitKey, gitVal)
                     for eachGroup in securityGroups:
                         if eachGroup.name == groupBeingExamined.rstrip('.yaml'):
-                            if is_number(gitVal['protocol']):
+                            if isinstance(gitVal['protocol'], int):
                                 gitVal['ports'].fromport = None
                                 gitVal['ports'].toport = None
                             if gitVal['protocol'] == 'all':
