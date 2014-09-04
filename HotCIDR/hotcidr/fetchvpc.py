@@ -124,11 +124,7 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
         with open(fn, 'w') as out:
             out.write(dump(data))
 
-    try:
-        instances = connection.get_only_instances()
-    except AttributeError:
-        print("ERROR: connection.get_only_instances not found. boxes.yaml cannot be created.")
-        return 1
+    instances = connection.get_only_instances()
 
     instancesDict = dict()
     for instance in instances:
