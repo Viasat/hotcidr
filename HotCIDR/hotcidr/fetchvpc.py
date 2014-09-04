@@ -52,7 +52,7 @@ def append_to_rules(rules, group, rule, grant, inout_str):
             ('direction',inout_str),
             ('protocol',ip_protocol_str),
             ('location',srcip_str),
-            ('ports', hotcidr.ports.Port(rule.from_port, rule.to_port) ),
+            ('ports', hotcidr.ports.Port(int(rule.from_port), int(rule.to_port)) ),
             ]))
 
 def main(vpc_region_code, output = '', access_id = None, access_key = None, silence = None):
