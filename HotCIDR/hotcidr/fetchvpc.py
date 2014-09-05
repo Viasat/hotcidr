@@ -1,11 +1,8 @@
 from __future__ import print_function
-import argparse
 import boto.ec2
-import collections
 import os.path
 import hotcidr.state
 import sys
-from collections import OrderedDict
 import yaml
 import hotcidr.ports
 import gitlib
@@ -65,7 +62,7 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
 
     #Check argument validity
     if not gitlib.is_valid_vpc(vpc_region_code):
-        print('Error: invalid vpc-region-code. Must be one of: ' + valid_regions, file=sys.stderr)
+        print('Error: invalid vpc-region-code.', file=sys.stderr)
         return 1
 
     yaml.add_representer(dict, yaml.representer.SafeRepresenter.represent_dict)
@@ -100,9 +97,7 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
     for group in groups:
         if not args['silence']:
             print('Forming group %s' % str(group.id))
-        fn = os.path.join(relgroupsdir, '%s.yaml' % str(group.name))
-        name = str(group.name)
-        fn = os.path.join(outdir, fn)
+        fn = os.path.join(outdir, relgroupsdir, '%s.yaml' % str(group.name))
 
         rules = []
         data = {

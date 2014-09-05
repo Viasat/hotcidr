@@ -5,10 +5,9 @@ import logging
 import netaddr
 import os
 import re
-import sys
 import toposort
-import hotcidr.state
 import yaml
+import hotcidr.state
 
 def inflect_a(s, p=inflect.engine()):
     x = p.plural(s)
