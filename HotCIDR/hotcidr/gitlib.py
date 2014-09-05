@@ -324,6 +324,9 @@ def get_added_deleted_rules( git_dir, yamlfile ):
             if len(rules) == 0:
                 rules = [{}]
 
+            if type(rules) is dict:
+                rules = [rules]
+
             for rule in rules:
                 rule['hexsha'] = commit_hexsha
                 rule['author'] = author
