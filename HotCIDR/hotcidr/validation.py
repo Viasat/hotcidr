@@ -8,6 +8,7 @@ import re
 import sys
 import toposort
 import hotcidr.state
+import yaml
 
 def inflect_a(s, p=inflect.engine()):
     x = p.plural(s)
