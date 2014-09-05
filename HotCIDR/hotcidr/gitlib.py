@@ -318,7 +318,8 @@ def get_added_deleted_rules( git_dir, yamlfile ):
             except TypeError:
                 continue
 
-            rules = rules['rules']
+            if 'rules' in rules:
+                rules = rules['rules']
 
             rules_dict = {}
             if len(rules) == 0:
