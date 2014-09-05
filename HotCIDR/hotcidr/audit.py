@@ -1,5 +1,6 @@
 from __future__ import print_function
 import math
+import datetime
 import hotcidr.state
 from hotcidr.modifydatabase import printSinceSpecifiedTime
 from hotcidr.gitlib import *
@@ -114,16 +115,16 @@ def format_rule(rule, yamlfile, createdby, createdon, approvedby, approvedon, ac
             ports_str = rule['fromport']
         else:
             ports_str = rule['fromport'] + '-' + rule['toport']
-        
+ 
     #Format created/approved on
-    if isinstance(createdon,float):
+    try:
         createdon_str = datetime.datetime.fromtimestamp( float(createdon) ).strftime('%Y-%m-%d %H:%M:%S') + ' UTC'
-    else:
+    except ValueError:
         createdon_str = 'n/a'
 
-    if isinstance(approvedon,float):
+    try:
         approvedon_str = datetime.datetime.fromtimestamp( float(approvedon) ).strftime('%Y-%m-%d %H:%M:%S') + ' UTC'
-    else:
+    except ValueError:
         approvedon_str = 'n/a'
 
     #Format action_str
@@ -368,7 +369,7 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
             else:
                 formatted_rules.append(formatted_rule)
 
-            approved_authdate = {} #TODO (remove and test): For debugging, to make mistakes obvious
+            approved_authdate = {}
 
         #Get per-group rules that were added (existed in a past version of the yaml file)
         if not args['output_webserver'] and not args['sort_chronologically']:
