@@ -74,7 +74,7 @@ def format_rule(rule, yamlfile, createdby, createdon, approvedby, approvedon, ac
         if hasattr(rule['ports'], 'fromport') and rule['ports'].fromport:
             rule['fromport'] = str(rule['ports'].fromport)
 
-    if not 'protocol' in rule or not 'toport' in rule or not 'fromport' in rule:
+    if not 'protocol' in rule:
         corrupted = True
 
     if not 'protocol' in rule:
@@ -139,6 +139,10 @@ def format_rule(rule, yamlfile, createdby, createdon, approvedby, approvedon, ac
     rule['ports'] = ports_str
     rule['from_or_to'] = from_or_to
     rule['type'] = type_str
+
+    rule['protocol'] = str(rule['protocol'])
+    rule['fromport'] = str(rule['fromport'])
+    rule['toport'] = str(rule['toport'])
 
     return rule
 
