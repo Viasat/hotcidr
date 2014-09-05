@@ -281,7 +281,6 @@ def get_commit_approved_authdate(commit_hexsha, git_dir, yamlfile):
         if len(this_commit) == 3:
             auth = this_commit[0]
             date = this_commit[1]
-            hexsha = this_commit[2]
             return {'author':auth, 'date':date}
 
     #No auth/date found, return n/a
