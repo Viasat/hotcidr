@@ -1,3 +1,4 @@
+import difflib
 import inflect
 import itertools
 import logging
@@ -110,8 +111,15 @@ def find_unused_groups(self):
 def validate_groups(self):
     used = set(itertools.chain(*(b['groups'] for b in self.boxes.values()
                                              if 'groups' in b)))
-    for g in used - set(self.groups.keys()):
-        self.fatal("%s is not defined" % g)
+    valid_groups = set(self.groups.keys())
+    for g in used - valid_groups:
+        guess = difflib.get_close_matches(g, valid_groups)
+        if guess:
+            guess = " (Did you mean %s?)" % guess[0]
+        else:
+            guess = ""
+
+        self.fatal("%s is not defined%s" % (g, guess))
 
 @requires(load_groups)
 def validate_group_names(self):

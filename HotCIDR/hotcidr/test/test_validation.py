@@ -117,12 +117,12 @@ class TestValidateGroups(TestCase):
 
     def test_undefined_group(self):
         self.v.boxes = {
-            'box1': {'groups': ['group1', 'group2']},
-            'box2': {'groups': ['group1']},
-            'box3': {'groups': ['group3', 'group4']},
+            'box1': {'groups': ['dog', 'cat']},
+            'box2': {'groups': ['bear']},
+            'box3': {'groups': ['cat', 'bare']},
         }
-        self.v.groups = {'group1': {}, 'group2': {}, 'group3': {}}
-        self.v.expect_fatal("group4 is not defined")
+        self.v.groups = {'bear': {}, 'dog': {}, 'cat': {}}
+        self.v.expect_fatal("bare is not defined (Did you mean bear?)")
 
 
 class TestValidateGroupNames(TestCase):
