@@ -9,7 +9,7 @@ def parse(s):
             try:
                 return Port(int(start), int(end))
             except ValueError:
-                return None
+                return Port(-1)
 
 
 class Port(object):
@@ -47,3 +47,6 @@ class Port(object):
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.yaml_str())
