@@ -9,20 +9,6 @@ import hotcidr
 from hotcidr import fetchvpc
 from hotcidr import gitlib
 
-def load_boxes(d):
-    return hotcidr.state.load(open(os.path.join(d, 'boxes.yaml')))
-
-def load_groups(d, ext='.yaml'):
-    groups_dir = os.path.join(d, 'groups')
-    assert(os.path.isdir(groups_dir))
-    r = {}
-    for group in os.listdir(groups_dir):
-        if group.endswith(ext):
-            f = os.path.join(groups_dir, group)
-            group_name = group[:-len(ext)]
-            r[group_name] = hotcidr.state.load(open(f))
-    return r
-
 class Action(object):
     def __call__(self):
         raise NotImplementedError
@@ -62,15 +48,15 @@ class ModifyRule(Action):
         proto = self.rule['protocol'] 
         if proto == 'all':
             proto = -1
-        loco = self.rule['location']
-        if loco == 'all':
-            loco = '0.0.0.0/0'
+        loc = self.rule['location']
+        if loc == 'all':
+            loc = '0.0.0.0/0'
 
         f(group_id=self.group,
           ip_protocol=proto,
           from_port=self.rule['ports'].fromport,
           to_port=self.rule['ports'].toport,
-          cidr_ip=loco)
+          cidr_ip=loc)
 
 
 class RemoveRule(ModifyRule):
@@ -86,7 +72,7 @@ class RemoveRule(ModifyRule):
 
 
     def __repr__(self):
-        return "Rem rule (%s, %s, %s) from %s" % (
+        return "Remove rule (%s, %s, %s) from %s" % (
                 self.rule['protocol'], self.rule['ports'],
                 self.rule['location'], self.group)
 
@@ -143,6 +129,7 @@ def rules(group):
         for rule in group['rules']:
             yield Rule(**{k: rule[k] for k in attr if k in rule})
 
+
 def main(git_repo, region_code, aws_key, aws_secret):
     # Clone the git repo
     git_dir, successful = gitlib.get_valid_repo(git_repo)
@@ -158,7 +145,7 @@ def main(git_repo, region_code, aws_key, aws_secret):
                   access_key=aws_secret,
                   silence=True)
 
-    actions = getActions(git_dir, aws_dir)
+    actions = list(get_actions(git_dir, aws_dir))
 
     gitlib.remove_git_repo()
     shutil.rmtree(tmpdir)
@@ -172,12 +159,13 @@ def main(git_repo, region_code, aws_key, aws_secret):
         print(action)
         action(conn)
 
-def getActions(git_dir, aws_dir):
-    aws_instances = load_boxes(aws_dir)
-    aws_groups = load_groups(aws_dir)
 
-    git_instances = load_boxes(git_dir)
-    git_groups = load_groups(git_dir)
+def get_actions(git_dir, aws_dir):
+    aws_instances = gitlib.load_boxes(aws_dir)
+    aws_groups = gitlib.load_groups(aws_dir)
+
+    git_instances = gitlib.load_boxes(git_dir)
+    git_groups = gitlib.load_groups(git_dir)
 
     # Add missing groups to AWS
     for g in git_groups:

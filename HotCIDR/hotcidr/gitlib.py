@@ -36,6 +36,25 @@ def is_valid_vpc(vpc):
 
 rule_fields = ['direction','protocol','location']
 
+
+#Load boxes
+def load_boxes(d):
+    return hotcidr.state.load(open(os.path.join(d, 'boxes.yaml')))
+
+
+#Load groups
+def load_groups(d, ext='.yaml'):
+    groups_dir = os.path.join(d, 'groups')
+    assert(os.path.isdir(groups_dir))
+    r = {}
+    for group in os.listdir(groups_dir):
+        if group.endswith(ext):
+            f = os.path.join(groups_dir, group)
+            group_name = group[:-len(ext)]
+            r[group_name] = hotcidr.state.load(open(f))
+    return r
+
+
 #Get a hash string from a rule
 def get_hash_from_rule(rule_orig):
     rule = rule_orig.copy()
