@@ -1,6 +1,5 @@
 from __future__ import print_function
 from shutil import rmtree
-from hotcidr import fetch
 from hotcidr import state
 import contextlib
 import git
@@ -166,26 +165,6 @@ def create_remote_repo(git_api_url, vpc, repo_name, auth):
     print('Added ' + desired_repo_url) 
 
     return desired_repo_url
-
-#Fetch VPC and push into remote repo
-def commit_fetch(repo_url, vpc, access_id, access_key):
-    #Get repo path and fetch into it
-    repo_path, is_git_repo = get_valid_repo(repo_url)
-    fetch.main(vpc,access_id,access_key,output=repo_path,silence=True)
-
-    #Make initial commit with fetch
-    git.Git(repo_path).init()
-    git.Git(repo_path).add('*')
-    git.Git(repo_path).commit('-m','\"Initial commit\"')
-
-    #Add origin url, unless it already exists
-    try:
-        git.Git(repo_path).remote('add','origin',repo_url)
-    except git.exc.GitCommandError:
-        pass
-
-    #Warning: If the repo isn't fully deleted, the push will be erroneous
-    git.Git(repo_path).push('-f','-u','origin','master')
 
 #Check for git repo existence: create directory if it is a repo, else load directory normally
 def get_valid_repo( repo ):
