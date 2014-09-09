@@ -144,7 +144,7 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
 
 @contextlib.contextmanager
 def vpc(region, key, secret):
-    tmpdir = tempfile.mktempd()
+    tmpdir = tempfile.mkdtemp()
     main(region, tmpdir, key, secret, True)
     yield tmpdir
     shutil.rmtree(tmpdir)
