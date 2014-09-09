@@ -299,7 +299,7 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
         #Print progress
         i += 1
         if not args['silence']:
-            print('Processing ' + groups[group], file=sys.stderr)
+            print('%s%% Processing %s' % (str(int(100*i/groups_num)), group), file=sys.stderr)
         sys.stderr.flush()
 
         #Print line seperators 
@@ -442,11 +442,6 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
                 for formatted_rule in formatted_dict[timestamp]:
                     output_str += print_rule(formatted_rule)
 
-        #print(output_str) #Print output as it is produced, for quicker debugging
-        if not args['silence']:
-            print('Progress: ' + str(int(100*i/groups_num)), file=sys.stderr)
-        sys.stderr.flush()
-
     #Write file to output if specified, or else print string
     if args['output']:
         f = open(args['output'], 'w')
@@ -458,6 +453,10 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
     #Remove temporary git repo
     if is_clone_url and not args['keep_repo']:
         remove_git_repo()
+
+    if not args['silence']:
+        print('Summary: Audit successfully completed for %d groups.' % i, file=sys.stderr)
+    sys.stderr.flush()
 
     return output_str
 
