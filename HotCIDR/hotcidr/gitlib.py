@@ -7,8 +7,7 @@ import requests, json
 from shutil import rmtree
 import fetchvpc
 import yaml
-
-GIT_REPO_DIR = os.path.join('/tmp', 'hotcidr')
+import tempfile
 
 #socket.inet_aton(addr) is not used here since EC2 addresses cannot be integers - they must be "x:x:x:x/x"
 def is_cidr(s):
@@ -194,22 +193,18 @@ def get_valid_repo( repo ):
     if not os.path.isdir(repo):
         is_git_repo = True
 
-        #If the repo is not a git remote, fail
         if not repo.endswith('.git'):
             print('Error: ' + repo + ' is not a directory nor a valid git clone URL.', file=sys.stderr)
             return None, None
 
-        #If the repo doesn't exist remotely, error
         try:
             git.Git().ls_remote( repo )
         except:
             print('Error: ' + repo + ' is not a valid git clone URL.', file=sys.stderr)
 
         #Get new repo location
-        gitrepo_location = GIT_REPO_DIR
+        gitrepo_location = tempfile.mkdtemp()
         new_repo_path = os.path.join(gitrepo_location, repo.rsplit('/',1)[1].rsplit('.',1)[0])
-
-        #If the repo can't be cloned at this point, it's because there is already one at gitrepo_location
         new_full_path = os.path.join(gitrepo_location, new_repo_path)
         
         if os.path.exists(new_full_path):
@@ -397,11 +392,4 @@ def get_added_deleted_rules( git_dir, yamlfile ):
     added_deleted_rules['added_previously'].reverse()
 
     return added_deleted_rules
-
-def remove_git_repo():
-    try:
-        rmtree(GIT_REPO_DIR)
-    except OSError:
-        print('Error: ' + GIT_REPO_DIR + ' was not successfully deleted. Check permissions.', file=sys.stderr)
-        return 1
 

@@ -130,7 +130,7 @@ def rules(group):
             yield Rule(**{k: rule[k] for k in attr if k in rule})
 
 
-def main(git_repo, region_code, aws_key, aws_secret):
+def main(git_repo, region_code, aws_key, aws_secret, dry_run):
     # Clone the git repo
     git_dir, successful = gitlib.get_valid_repo(git_repo)
     if not successful:
@@ -157,7 +157,8 @@ def main(git_repo, region_code, aws_key, aws_secret):
     for action in actions:
         # TODO: Log changes somewhere?
         print(action)
-        action(conn)
+        if not dry_run:
+            action(conn)
 
 
 def get_actions(git_dir, aws_dir):
@@ -166,6 +167,9 @@ def get_actions(git_dir, aws_dir):
 
     git_instances = gitlib.load_boxes(git_dir)
     git_groups = gitlib.load_groups(git_dir)
+
+    for g in git_groups:
+        git_groups[g]['id'] = aws_groups[g]['id']
 
     # Add missing groups to AWS
     for g in git_groups:

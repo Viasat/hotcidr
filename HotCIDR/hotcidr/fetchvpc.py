@@ -6,27 +6,20 @@ import sys
 import yaml
 import hotcidr.ports
 import gitlib
+from shutil import rmtree
 
 def dump(x):
     return hotcidr.state.dump(x, default_flow_style=False)
 
 def append_to_rules(rules, group, rule, grant, inout_str):
     srcip_str = None
-    try:
-        if grant.group_id:
-            srcip_str = str(grant.group_id)
-    except AttributeError:
-        try:
-            if grant.groupId:
-                srcip_str = str(grant.groupId)
-        except AttributeError:
-            pass
 
-    try:
+    if hasattr(grant, 'cidr_ip'):
         if grant.cidr_ip:
             srcip_str = str(grant.cidr_ip)
-    except AttributeError:
-        pass
+
+    if not srcip_str:
+        srcip_str = group.name
 
     none_string = 'None'
 
@@ -74,8 +67,10 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
     try:
         os.mkdir(outdir)
     except:
-        print('Please remove the directory ' + outdir + ' before continuing')
-        return 1
+        rmtree(outdir)
+        os.mkdir(outdir)
+        #print('Please remove the directory ' + outdir + ' before continuing')
+        #return 1
 
     try:
         os.mkdir(groupsdir)
