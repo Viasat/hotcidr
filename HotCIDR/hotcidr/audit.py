@@ -212,7 +212,7 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
     if not args['from_time']:
         args['from_time'] = 0
     else:
-        if isinstance(args['from_time'],int):
+        if isint(args['from_time']):
             args['from_time'] = int(args['from_time'])
         else:
             print('Warning: from-time argument is not an integer. It should be a timestamp in UTC. It will be set to 0.', file=sys.stderr)
@@ -221,7 +221,7 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
     if not args['to_time']:
         args['to_time'] = int(math.floor(time.time()))
     else:
-        if isinstance(args['to_time'],int):
+        if isint(args['to_time']):
             args['to_time'] = int(args['to_time'])
         else:
             print('Warning: from-time argument is not an integer. It should be a timestamp in UTC. It will be set to the current time.', file=sys.stderr)
