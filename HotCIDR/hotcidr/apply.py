@@ -69,6 +69,8 @@ class ModifyRule(Action):
               to_port=toport_temp,
               cidr_ip=loc)
         else:
+            loc = conn.get_all_security_groups([loc])[0].__dict__['id']
+
             try:
                 f(group_id=self.group,
                   ip_protocol=proto,
@@ -134,22 +136,11 @@ def get_actions(git_dir, aws_dir):
     git_instances = util.load_boxes(git_dir)
     git_groups = util.load_groups(git_dir)
 
-    #Change git id's and locations to match sg-ids in EC2
-    for g in git_groups:
-        if g in aws_groups:
-            git_groups[g]['id'] = aws_groups[g]['id']
-
-            for r in git_groups[g]['rules']:
-                if not util.is_cidr(r['location']):
-                    r['location'] = aws_groups[g]['id']
-
     # Add missing groups to AWS
     for g in git_groups:
         if g not in aws_groups:
             print("Adding group %s to AWS" % g)
-            newsg = CreateSecurityGroup(g, 'Automatically created by HotCIDR')
-            print(newsg)
-            yield newsg
+            yield CreateSecurityGroup(g, 'Automatically created by HotCIDR')
 
     # Update associated security groups for instances
     for aws_id, aws_inst in aws_instances.items():
@@ -167,7 +158,12 @@ def get_actions(git_dir, aws_dir):
     # Update rules for each security group
     for g, git_group in git_groups.items():
         git_rules = set(rules(git_group))
-        aws_rules = set(rules(aws_groups[g]))
+
+        if g in aws_groups:
+            aws_rules = set(rules(aws_groups[g]))
+        else:
+            aws_rules = set()
+
         if git_rules != aws_rules:
             for rule in aws_rules - git_rules:
                 yield RemoveRule(aws_groups[g]['id'], rule)
