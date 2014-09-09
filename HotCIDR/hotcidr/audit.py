@@ -452,10 +452,10 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
 
     #Remove temporary git repo
     if is_clone_url and not args['keep_repo']:
-        remove_git_repo()
+        rmtree(args['repo'])
 
     if not args['silence']:
-        print('Summary: Audit successfully completed for %d groups.' % i, file=sys.stderr)
+        print('Audit successfully completed for %d groups.' % i, file=sys.stderr)
     sys.stderr.flush()
 
     return output_str
