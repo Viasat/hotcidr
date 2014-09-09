@@ -1,15 +1,16 @@
 #!/usr/bin/python
-import argparse
 import os, sys
+import argparse
 from hotcidr.apply import main
 
 #Parse command line arguments
 parser = argparse.ArgumentParser(description="Keep AWS consistent with corresponding Git Repository")
 
-parser.add_argument('git_repo', help='Git Repository AWS is based on\n')
-parser.add_argument('aws_region', help= 'AWS region name\n')
-parser.add_argument('aws_access_key_id', help='AWS Access Key Id\n')
-parser.add_argument('aws_secret_access_key', help='AWS Secret Access Key\n')
+parser.add_argument('git_repo', help='Git Repository AWS is based on')
+parser.add_argument('aws_region', help= 'AWS region name')
+parser.add_argument('aws_access_key_id', help='AWS Access Key Id')
+parser.add_argument('aws_secret_access_key', help='AWS Secret Access Key')
+parser.add_argument('--n', help='Dry-run changes, without actually applying them', action='store_true')
 
 args = vars(parser.parse_args())
 
@@ -17,5 +18,6 @@ main(
     args['git_repo'],
     args['aws_region'],
     args['aws_access_key_id'],
-    args['aws_secret_access_key']
+    args['aws_secret_access_key'],
+    args['n']
 )
