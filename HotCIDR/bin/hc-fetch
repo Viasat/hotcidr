@@ -7,9 +7,9 @@ import argparse
 parser = argparse.ArgumentParser(description='Fetch VPC rules and save as FWMAN directory')
 parser.add_argument('vpc-region-code', help='The region code for the EC2 VPC, e.g. \'us-west-1\'')
 parser.add_argument('output', help='Output folder for FWMAN-style rules')
-parser.add_argument('--aws-access-key-id', help='The AWS access key id')
-parser.add_argument('--aws-secret-access-key', help='The AWS secret access key')
+parser.add_argument('aws-access-key-id', help='The AWS access key id')
+parser.add_argument('aws-secret-access-key', help='The AWS secret access key')
 parser.add_argument('--silence', help='Silence output', action='store_true')
 args = vars(parser.parse_args())
 
-main(args['vpc-region-code'], output=args['output'], access_id=args['aws_access_key_id'], access_key=args['aws_secret_access_key'], silence=args['silence'])
+main(args['vpc-region-code'], output=args['output'], access_id=args['aws-access-key-id'], access_key=args['aws-secret-access-key'], silence=args['silence'])
