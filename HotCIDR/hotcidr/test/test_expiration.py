@@ -3,23 +3,21 @@ import unittest
 from shutil import rmtree, copytree
 import git
 import yaml
+import tempfile
 
 import hotcidr.gitlib
 import hotcidr.fetchvpc
 import hotcidr.deleteexpired
 
 test_repo_name = 'repo_test'
-GIT_REPO_DIR = hotcidr.gitlib.GIT_REPO_DIR
-test_repo_path = os.path.join(GIT_REPO_DIR, test_repo_name)
+test_repo_src = os.path.join(os.path.realpath(__file__).rsplit('/',1)[0], test_repo_name)
 
 class TestExpiration(unittest.TestCase):
     def test_rulesyaml_expiration(self):
         #Create new repo from repo_test
-        if os.path.exists(GIT_REPO_DIR):
-            rmtree(GIT_REPO_DIR)
-
-        os.mkdir(GIT_REPO_DIR)
-        copytree(test_repo_name, test_repo_path)
+        temp_path = tempfile.mkdtemp()
+        test_repo_path = os.path.join(temp_path, test_repo_name)
+        copytree(test_repo_src, test_repo_path)
 
         #Initially commit repo
         git.Git(test_repo_path).init()
@@ -88,15 +86,13 @@ class TestExpiration(unittest.TestCase):
         self.assertEqual(len(yaml_none['rules']), 0)
 
         #Clean up temp directory
-        rmtree(GIT_REPO_DIR)
+        temp_path.close()
 
     def test_expirationyaml(self):
         #Create new repo from repo_test
-        if os.path.exists(GIT_REPO_DIR):
-            rmtree(GIT_REPO_DIR)
-
-        os.mkdir(GIT_REPO_DIR)
-        copytree(test_repo_name, test_repo_path)
+        temp_path = tempfile.mkdtemp()
+        test_repo_path = os.path.join(temp_path, test_repo_name)
+        copytree(test_repo_src, test_repo_path)
 
         #Initially commit repo
         git.Git(test_repo_path).init()
