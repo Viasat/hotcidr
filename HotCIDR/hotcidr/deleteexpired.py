@@ -2,7 +2,7 @@ from __future__ import print_function
 import os, sys, time
 import git
 import hotcidr.state
-import util
+from util import *
 import yaml
 
 def main(repo = None, dont_push = None, silence = None):
@@ -63,7 +63,7 @@ def main(repo = None, dont_push = None, silence = None):
             #Handle expirations.yaml: add expiration field to all matching rules
             if expirations:
                 for expired_rule in expirations:
-                    if 'expiration' in expired_rule and isinstance(expired_rule['expiration'], int):
+                    if 'expiration' in expired_rule and isint(expired_rule['expiration']):
                         #TODO: Check that these two fields are in util.rule_fields
                         if len(expired_rule.keys()) >= 2:
                             rule_is_expired = True
@@ -83,7 +83,7 @@ def main(repo = None, dont_push = None, silence = None):
                         print('Warning: rule in expirations.yaml is missing a valid expiration field: ' + expired_rule)
 
             #Handle expirations in <group>.yaml
-            if 'expiration' in added_rule and isinstance(added_rule['expiration'], int):
+            if 'expiration' in added_rule and isint(added_rule['expiration']):
                 if int(added_rule['expiration']) < int(time.time()) - int(added_rule['date']):
                     if not args['silence']:
                         print('Removed rule: ' + str(added_rule))
