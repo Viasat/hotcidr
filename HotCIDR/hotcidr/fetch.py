@@ -1,15 +1,17 @@
 from __future__ import print_function
+from hotcidr import gitlib
+from hotcidr import ports
+from hotcidr import state
 import boto.ec2
+import contextlib
 import os.path
-import hotcidr.state
+import shutil
 import sys
+import tempfile
 import yaml
-import hotcidr.ports
-import gitlib
-from shutil import rmtree
 
 def dump(x):
-    return hotcidr.state.dump(x, default_flow_style=False)
+    return state.dump(x, default_flow_style=False)
 
 def append_to_rules(rules, group, rule, grant, inout_str):
     srcip_str = None
@@ -42,7 +44,7 @@ def append_to_rules(rules, group, rule, grant, inout_str):
             ('direction',inout_str),
             ('protocol',ip_protocol_str),
             ('location',srcip_str),
-            ('ports', hotcidr.ports.Port(int(rule.from_port), int(rule.to_port)) ),
+            ('ports', ports.Port(int(rule.from_port), int(rule.to_port)) ),
             ]))
 
 def main(vpc_region_code, output = '', access_id = None, access_key = None, silence = None):
@@ -67,7 +69,7 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
     try:
         os.mkdir(outdir)
     except:
-        rmtree(outdir)
+        shutil.rmtree(outdir)
         os.mkdir(outdir)
         #print('Please remove the directory ' + outdir + ' before continuing')
         #return 1
@@ -140,3 +142,9 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
 
     open(os.path.join(outdir, 'expirations.yaml'), 'w')
 
+@contextlib.contextmanager
+def vpc(region, key, secret):
+    tmpdir = tempfile.mktempd()
+    main(region, tmpdir, key, secret, True)
+    yield tmpdir
+    shutil.rmtree(tmpdir)

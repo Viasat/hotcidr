@@ -2,3 +2,5 @@
 screenlog*
 build
 *.swp
+*.pyc
+*.bak

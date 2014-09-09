@@ -1,11 +1,16 @@
 from __future__ import print_function
-import os, sys, time
-import git
-import hotcidr.state
-import hashlib
-import requests, json
 from shutil import rmtree
-import fetchvpc
+from hotcidr import fetch
+from hotcidr import state
+import contextlib
+import git
+import hashlib
+import os
+import sys
+import time
+import requests
+import json
+import shutil
 import yaml
 import tempfile
 
@@ -38,7 +43,7 @@ rule_fields = ['direction','protocol','location']
 
 #Load boxes
 def load_boxes(d):
-    return hotcidr.state.load(open(os.path.join(d, 'boxes.yaml')))
+    return state.load(open(os.path.join(d, 'boxes.yaml')))
 
 
 #Load groups
@@ -50,7 +55,7 @@ def load_groups(d, ext='.yaml'):
         if group.endswith(ext):
             f = os.path.join(groups_dir, group)
             group_name = group[:-len(ext)]
-            r[group_name] = hotcidr.state.load(open(f))
+            r[group_name] = state.load(open(f))
     return r
 
 
@@ -166,7 +171,7 @@ def create_remote_repo(git_api_url, vpc, repo_name, auth):
 def commit_fetch(repo_url, vpc, access_id, access_key):
     #Get repo path and fetch into it
     repo_path, is_git_repo = get_valid_repo(repo_url)
-    fetchvpc.main(vpc,access_id,access_key,output=repo_path,silence=True)
+    fetch.main(vpc,access_id,access_key,output=repo_path,silence=True)
 
     #Make initial commit with fetch
     git.Git(repo_path).init()
@@ -187,7 +192,7 @@ def get_valid_repo( repo ):
 
     if repo == None:
         print('ERROR: git repo is specified as \"None\". Please enter in a valid repo or clone url.',file=sys.stderr)
-        return None
+        return None, None
 
     #If the repo is not a directory
     if not os.path.isdir(repo):
@@ -206,11 +211,11 @@ def get_valid_repo( repo ):
         gitrepo_location = tempfile.mkdtemp()
         new_repo_path = os.path.join(gitrepo_location, repo.rsplit('/',1)[1].rsplit('.',1)[0])
         new_full_path = os.path.join(gitrepo_location, new_repo_path)
-        
+
         if os.path.exists(new_full_path):
             rmtree(new_full_path)
         git.Repo.clone_from(repo, new_full_path)
-        
+
         repo = new_repo_path
 
     #If the repo is a directory, check that it is a git repo
@@ -323,7 +328,7 @@ def get_added_deleted_rules( git_dir, yamlfile ):
                 continue
 
             try:
-                rules = hotcidr.state.load(yamlfile_data)
+                rules = state.load(yamlfile_data)
 
             #Past version of the yaml file had a formatting error
             except yaml.scanner.ScannerError:
@@ -393,3 +398,9 @@ def get_added_deleted_rules( git_dir, yamlfile ):
 
     return added_deleted_rules
 
+@contextlib.contextmanager
+def repo(repo):
+    git_dir, is_clone_url = get_valid_repo(repo)
+    yield git_dir
+    if is_clone_url:
+        shutil.rmtree(git_dir)
