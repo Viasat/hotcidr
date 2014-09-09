@@ -6,7 +6,7 @@ setup(
     author='ViaSat',
     author_email='stephan.kemper@viasat.com',
     packages=['hotcidr', 'hotcidr.test'],
-    scripts=['bin/hc-apply', 'bin/hc-audit', 'bin/hc-validate', 'bin/hc-fetch', 'bin/hc-deleteexpired','bin/hc-setupall'],
+    scripts=['bin/hc-apply', 'bin/hc-audit', 'bin/hc-validate', 'bin/hc-fetch', 'bin/hc-deleteexpired'],
     #url='http://pypi.python.org/pypi/HotCIDR',
     license='LICENSE.txt',
     description="Firewall rule management and automation tools",
