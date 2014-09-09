@@ -104,7 +104,7 @@ def rules(group):
             r = {k: rule[k] for k in rule_attr if k in rule}
             for attr in rule_attr:
                 r.setdefault(attr, None)
-            yield Rule(r)
+            yield Rule(**r)
 
 def main(git_repo, region_code, aws_key, aws_secret, dry_run):
     with fetch.vpc(region_code, aws_key, aws_secret) as aws_dir,\
