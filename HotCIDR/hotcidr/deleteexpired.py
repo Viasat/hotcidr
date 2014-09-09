@@ -2,7 +2,7 @@ from __future__ import print_function
 import os, sys, time
 import git
 import hotcidr.state
-import gitlib
+import util
 import yaml
 
 def main(repo = None, dont_push = None, silence = None):
@@ -11,9 +11,9 @@ def main(repo = None, dont_push = None, silence = None):
     args['dont_push'] = dont_push
     args['silence'] = silence
     
-    args['repo'], is_git_repo = gitlib.get_valid_repo( args['repo'] )
+    args['repo'], is_git_repo = util.get_valid_repo( args['repo'] )
 
-    groups = gitlib.get_groups_dict(args['repo'])
+    groups = util.get_groups_dict(args['repo'])
 
     #Sanity check expirations
     try:
@@ -27,7 +27,7 @@ def main(repo = None, dont_push = None, silence = None):
         print('expirations.yaml is necessary for expiration checking.', file=sys.stderr)
         return 1
 
-    expirations = gitlib.get_added_deleted_rules(args['repo'],'expirations.yaml')['added']
+    expirations = util.get_added_deleted_rules(args['repo'],'expirations.yaml')['added']
 
     #Immediately terminate if there are no groups, or else a division by 0 will occur later
     groups_num = len(groups)
@@ -55,7 +55,7 @@ def main(repo = None, dont_push = None, silence = None):
             print('Warning: ' + os.path.join(args['repo'], groups[group]) + ' is not properly formatted and will be skipped:\n' + str(e), file=sys.stderr)
             continue
 
-        added_rules = gitlib.get_added_deleted_rules( args['repo'], groups[group] )['added']
+        added_rules = util.get_added_deleted_rules( args['repo'], groups[group] )['added']
         rules_removed = False
 
         for added_rule in added_rules:
@@ -64,10 +64,10 @@ def main(repo = None, dont_push = None, silence = None):
             if expirations:
                 for expired_rule in expirations:
                     if 'expiration' in expired_rule and isinstance(expired_rule['expiration'], int):
-                        #TODO: Check that these two fields are in gitlib.rule_fields
+                        #TODO: Check that these two fields are in util.rule_fields
                         if len(expired_rule.keys()) >= 2:
                             rule_is_expired = True
-                            for field in gitlib.rule_fields:
+                            for field in util.rule_fields:
                                 if not field in added_rule or not field in expired_rule:
                                     continue
 

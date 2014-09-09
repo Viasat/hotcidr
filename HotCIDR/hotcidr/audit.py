@@ -3,7 +3,7 @@ import math
 import datetime
 import hotcidr.state
 from hotcidr.modifydatabase import printSinceSpecifiedTime
-from hotcidr.gitlib import *
+from hotcidr.util import *
 
 #Return whether a timestamp is within the range specified by args
 def within_time_range(date):

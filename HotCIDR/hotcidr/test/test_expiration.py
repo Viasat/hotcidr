@@ -5,7 +5,7 @@ import git
 import yaml
 import tempfile
 
-import hotcidr.gitlib
+import hotcidr.util
 import hotcidr.fetchvpc
 import hotcidr.deleteexpired
 

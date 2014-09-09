@@ -3,7 +3,7 @@ import boto.ec2
 import collections
 
 from hotcidr import fetch
-from hotcidr import gitlib
+from hotcidr import util
 
 class Action(object):
     def __call__(self):
@@ -50,16 +50,37 @@ class ModifyRule(Action):
         proto = self.rule.protocol
         if proto == 'all':
             proto = -1
+
         loc = self.rule.location
         if loc == 'all':
             loc = '0.0.0.0/0'
 
-        f(group_id=self.group,
-          ip_protocol=proto,
-          from_port=self.rule.ports.fromport,
-          to_port=self.rule.ports.toport,
-          cidr_ip=loc)
+        if not self.rule.ports:
+            fromport_temp = -1
+            toport_temp = -1
+        else:
+            fromport_temp = self.rule.ports.fromport
+            toport_temp = self.rule.ports.toport
 
+        if util.is_cidr(loc):
+            f(group_id=self.group,
+              ip_protocol=proto,
+              from_port=fromport_temp,
+              to_port=toport_temp,
+              cidr_ip=loc)
+        else:
+            try:
+                f(group_id=self.group,
+                  ip_protocol=proto,
+                  from_port=fromport_temp,
+                  to_port=toport_temp,
+                  src_group_id=loc)
+            except:
+                f(group_id=self.group,
+                  ip_protocol=proto,
+                  from_port=fromport_temp,
+                  to_port=toport_temp,
+                  src_security_group_group_id=loc)
 
 class RemoveRule(ModifyRule):
     def __call__(self, conn):
@@ -106,34 +127,29 @@ def rules(group):
                 r.setdefault(attr, None)
             yield Rule(**r)
 
-def main(git_repo, region_code, aws_key, aws_secret, dry_run):
-    with fetch.vpc(region_code, aws_key, aws_secret) as aws_dir,\
-         gitlib.repo(git_repo) as git_dir:
-        actions = list(get_actions(git_dir, aws_dir))
-
-        conn = boto.ec2.connect_to_region(region_code,
-                                          aws_access_key_id=aws_key,
-                                          aws_secret_access_key=aws_secret)
-        for action in actions:
-            print(action)
-            if not dry_run:
-                action(conn)
-
 def get_actions(git_dir, aws_dir):
-    aws_instances = gitlib.load_boxes(aws_dir)
-    aws_groups = gitlib.load_groups(aws_dir)
+    aws_instances = util.load_boxes(aws_dir)
+    aws_groups = util.load_groups(aws_dir)
 
-    git_instances = gitlib.load_boxes(git_dir)
-    git_groups = gitlib.load_groups(git_dir)
+    git_instances = util.load_boxes(git_dir)
+    git_groups = util.load_groups(git_dir)
 
+    #Change git id's and locations to match sg-ids in EC2
     for g in git_groups:
-        git_groups[g]['id'] = aws_groups[g]['id']
+        if g in aws_groups:
+            git_groups[g]['id'] = aws_groups[g]['id']
+
+            for r in git_groups[g]['rules']:
+                if not util.is_cidr(r['location']):
+                    r['location'] = aws_groups[g]['id']
 
     # Add missing groups to AWS
     for g in git_groups:
         if g not in aws_groups:
             print("Adding group %s to AWS" % g)
-            yield CreateSecurityGroup(g, 'Automatically created by HotCIDR')
+            newsg = CreateSecurityGroup(g, 'Automatically created by HotCIDR')
+            print(newsg)
+            yield newsg
 
     # Update associated security groups for instances
     for aws_id, aws_inst in aws_instances.items():
@@ -157,3 +173,18 @@ def get_actions(git_dir, aws_dir):
                 yield RemoveRule(aws_groups[g]['id'], rule)
             for rule in git_rules - aws_rules:
                 yield AddRule(aws_groups[g]['id'], rule)
+
+def main(git_repo, region_code, aws_key, aws_secret, dry_run):
+    with fetch.vpc(region_code, aws_key, aws_secret) as aws_dir,\
+         util.repo(git_repo) as git_dir:
+        actions = list(get_actions(git_dir, aws_dir))
+
+        conn = boto.ec2.connect_to_region(region_code,
+                                          aws_access_key_id=aws_key,
+                                          aws_secret_access_key=aws_secret)
+
+        for action in actions:
+            print(action)
+            if not dry_run:
+                action(conn)
+

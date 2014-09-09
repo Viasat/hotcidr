@@ -1,5 +1,5 @@
 from __future__ import print_function
-from hotcidr import gitlib
+from hotcidr import util
 from hotcidr import ports
 from hotcidr import state
 import boto.ec2
@@ -56,7 +56,7 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
     args['access_key'] = access_key
 
     #Check argument validity
-    if not gitlib.is_valid_vpc(vpc_region_code):
+    if not util.is_valid_vpc(vpc_region_code):
         print('Error: invalid vpc-region-code.', file=sys.stderr)
         return 1
 
