@@ -1,12 +1,11 @@
 #!/usr/bin/env python2
 from hotcidr.audit import main
-from hotcidr.gitlib import GIT_REPO_DIR
 import argparse
 
 parser = argparse.ArgumentParser(description='Create audit output')
 
 #Positional arguments
-parser.add_argument('repo', help='Input git directory, or git clone URL. If a clone url is specified, the directory will be cloned to ' + GIT_REPO_DIR + '/<git repo name>, and read from there.')
+parser.add_argument('repo', help='Input git directory, or git clone URL.')
 
 #Optional arguments
 parser.add_argument('--from-time', help='Include events from this timestamp until the specified to-date')
