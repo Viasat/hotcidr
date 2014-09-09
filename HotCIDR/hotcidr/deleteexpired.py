@@ -125,6 +125,6 @@ def main(repo = None, dont_push = None, silence = None):
 
     #Remove temporary git repo
     if is_git_repo:
-        gitlib.remove_git_repo()
+        rmtree( args['repo'] )
 
     return 0
