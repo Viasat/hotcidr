@@ -13,13 +13,21 @@ import shutil
 import yaml
 import tempfile
 
+#This function is different than isinstance(n,int) in that it will pass for strings: e.g. '1'
+def isint(n):
+    try:
+        int(n)
+        return True
+    except:
+        return False
+
 #socket.inet_aton(addr) is not used here since EC2 addresses cannot be integers - they must be "x:x:x:x/x"
 def is_cidr(s):
     if hasattr(s, 'split'):
         n = s.split('.',4)
-        if isinstance(n[0],int) and isinstance(n[1],int) and isinstance(n[2],int):
+        if isint(n[0]) and isint(n[1]) and isint(n[2]):
             n3 = n[3].split('/',1)
-            if isinstance(n3[0],int) and (len(n3) == 1 or isinstance(n3[1],int)):
+            if isint(n3[0]) and (len(n3) == 1 or isint(n3[1])):
                 return True
     return False    
 
