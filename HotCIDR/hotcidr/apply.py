@@ -141,7 +141,10 @@ def get_actions(git_dir, aws_dir):
     for g in git_groups:
         if g not in aws_groups:
             print("Adding group %s to AWS" % g)
-            yield CreateSecurityGroup(g, 'Automatically created by HotCIDR')
+            desc = 'Automatically created by HotCIDR'
+            if 'description' in git_groups[g]:
+                desc = git_groups[g]['description']
+            yield CreateSecurityGroup(g, desc)
 
     # Update associated security groups for instances
     for aws_id, aws_inst in aws_instances.items():
