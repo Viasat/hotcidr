@@ -13,7 +13,7 @@ import yaml
 def dump(x):
     return state.dump(x, default_flow_style=False)
 
-def append_to_rules(connection, rules, group, rule, grant, inout_str):
+def append_to_rules(connection, rules, group, rule, grant, inout_str, nameid_lookup):
     srcip_str = None
 
     if hasattr(grant, 'cidr_ip'):
@@ -21,7 +21,7 @@ def append_to_rules(connection, rules, group, rule, grant, inout_str):
             srcip_str = str(grant.cidr_ip)
 
     if not srcip_str:
-        srcip_str = util.get_sgname(connection, grant.group_id)
+        srcip_str = nameid_lookup[grant.group_id]
 
     none_string = 'None'
 
@@ -91,6 +91,12 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
 
     groups = connection.get_all_security_groups()
 
+    #Create a lookup of name given id for each group, to speed up aliasing later
+    nameid_lookup = dict()
+    for group in groups:
+        nameid_lookup[group.id] = group.name
+
+    #Iterate each group
     for group in groups:
         fn = os.path.join(outdir, relgroupsdir, '%s.yaml' % str(group.name))
 
@@ -114,12 +120,12 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
         #Inbound rules
         for rule in group.rules:
             for grant in rule.grants:
-                append_to_rules(connection, rules, group, rule, grant, 'inbound')
+                append_to_rules(connection, rules, group, rule, grant, 'inbound', nameid_lookup)
 
         #Outbound rules
         for rule in group.rules_egress:
             for grant in rule.grants:
-                append_to_rules(connection, rules, group, rule, grant, 'outbound')
+                append_to_rules(connection, rules, group, rule, grant, 'outbound', nameid_lookup)
 
         with open(fn, 'w') as out:
             out.write(dump(data))
