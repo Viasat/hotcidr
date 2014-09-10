@@ -97,7 +97,8 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
         fn = os.path.join(outdir, relgroupsdir, '%s.yaml' % str(group.name))
 
         if os.path.exists(fn):
-            print('Duplicated security group: %s. Merging the groups together.' % group.name)
+            if not args['silence']:
+                print('Duplicated security group: %s. Merging the groups together.' % group.name)
             rules = state.load(open(fn))['rules']
         else:
             rules = []
