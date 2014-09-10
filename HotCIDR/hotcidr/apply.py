@@ -35,6 +35,11 @@ class ModifyInstanceAttribute(Action):
         self.value = value
 
     def __call__(self, conn):
+        if self.attr == 'groupSet':
+            groups = []
+            for g in self.value:
+                groups.extend(util.get_sgid(conn, g))
+            self.value = groups
         conn.modify_instance_attribute(self.inst_id, self.attr, self.value)
 
     def __repr__(self):
@@ -152,8 +157,6 @@ def get_actions(git_dir, aws_dir):
         if aws_id in git_instances and 'groups' in git_instances[aws_id]:
             groups = git_instances[aws_id]['groups']
             if set(groups) != set(aws_inst['groups']):
-                groups = set(aws_groups[g]['id'] for g in groups
-                                                 if 'id' in aws_groups[g])
                 yield ModifyInstanceAttribute(aws_id, 'groupSet', groups)
         else:
             print("Skipping instance %s (Does not exist in AWS)" % aws_id)
