@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import boto.ec2
 import collections
+import itertools
 import sys
 
 from hotcidr import fetch
@@ -174,41 +175,30 @@ def get_actions(git_dir, aws_dir):
             for rule in git_rules - aws_rules:
                 yield AddRule(g, rule)
 
-class Changes(object):
-    def __init__(self, actions=None):
-        self.created_security_groups = 0
-        self.modified_instance_attributes = 0
-        self.added_rules = 0
-        self.removed_rules = 0
+def changes(actions):
+    objs = dict(zip([
+        (CreateSecurityGroup, "%d group(s) created"),
+        (ModifyInstanceAttribute, "%d instance(s) updated"),
+        (AddRule, "%d rule(s) added"),
+        (RemoveRule, "%d rule(s) removed"),
+    ], itertools.repeat(0)))
+    r = []
+    for action in actions:
+        for k in objs.iterkeys():
+            if isinstance(action, k[0]):
+                objs[k] += 1
 
-        if actions:
-            for action in actions:
-                self.count(action)
+    for k, v in objs.iteritems():
+        out = k[1] % v
+        x, _, y = out.partition('(s)')
+        if v > 0:
+            if v == 1:
+                r.append(x + y)
+            else:
+                r.append(x + "s" + y)
 
-    def count(self, action):
-        assert(isinstance(action, Action))
-        if isinstance(action, CreateSecurityGroup):
-            self.created_security_groups += 1
-        elif isinstance(action, ModifyInstanceAttribute):
-            self.modified_instance_attributes += 1
-        elif isinstance(action, AddRule):
-            self.added_rules += 1
-        elif isinstance(action, RemoveRule):
-            self.removed_rules += 1
+    return ", ".join(r)
 
-    def __repr__(self):
-        r = []
-        if self.created_security_groups:
-            r.append("%d group(s) created" % self.created_security_groups)
-        if self.modified_instance_attributes:
-            r.append("%d instance(s) updated" % self.modified_instance_attributes)
-        if self.added_rules:
-            r.append("%d rule(s) added" % self.added_rules)
-        if self.removed_rules:
-            r.append("%d rule(s) removed" % self.removed_rules)
-        if not r:
-            return "No changes"
-        return ", ".join(r)
 
 def main(git_repo, region_code, aws_key, aws_secret, dry_run):
     with fetch.vpc(region_code, aws_key, aws_secret) as aws_dir,\
@@ -220,11 +210,10 @@ def main(git_repo, region_code, aws_key, aws_secret, dry_run):
                                           aws_secret_access_key=aws_secret)
 
         count = len(actions)
-        changes = []
         for num, action in enumerate(actions, 1):
             print("Action %d/%d: %s" % (num, count, action))
             sys.stdout.flush()
             if not dry_run:
                 action(conn)
 
-        print(Changes(actions))
+        print(changes(actions))
