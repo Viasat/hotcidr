@@ -89,7 +89,11 @@ def main(region_code, vpc_id, output = '', access_id = None, access_key = None, 
         print('Error: boto credentials are invalid. Check your configuration.')
         return 1
 
-    groups = connection.get_all_security_groups(filters={'vpc-id':vpc_id})
+    #If vpc_id specified, filter on it. Otherwise, return all security groups
+    if vpc_id:
+        groups = connection.get_all_security_groups(filters={'vpc-id':vpc_id})
+    else:
+        groups = connection.get_all_security_groups()
 
     #Create a lookup of name given id for each group, to speed up aliasing later
     nameid_lookup = dict()
