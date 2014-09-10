@@ -15,7 +15,6 @@ class Action(object):
     def __hash__(self):
         return tuple(self.__dict__.items()).__hash__()
 
-
 class CreateSecurityGroup(Action):
     def __init__(self, name, desc):
         self.name = name
@@ -26,7 +25,6 @@ class CreateSecurityGroup(Action):
 
     def __repr__(self):
         return "Create new security group %s (%s)" % (self.name, self.desc)
-
 
 class ModifyInstanceAttribute(Action):
     def __init__(self, inst_id, attr, value):
@@ -39,7 +37,6 @@ class ModifyInstanceAttribute(Action):
 
     def __repr__(self):
         return "Set %s of %s to %s" % (self.attr, self.inst_id, self.value)
-
 
 class ModifyRule(Action):
     def __init__(self, group, rule):
@@ -62,8 +59,10 @@ class ModifyRule(Action):
             fromport_temp = self.rule.ports.fromport
             toport_temp = self.rule.ports.toport
 
+        groupid = util.get_sgid(conn, self.group)[0]
+
         if util.is_cidr(loc):
-            f(group_id=self.group,
+            f(group_id=groupid,
               ip_protocol=proto,
               from_port=fromport_temp,
               to_port=toport_temp,
@@ -76,13 +75,13 @@ class ModifyRule(Action):
             #Boto uses src_group_id or src_security_group_group_id to mean the
             #same thing depending on which function is used here.
             try:
-                f(group_id=self.group,
+                f(group_id=groupid,
                   ip_protocol=proto,
                   from_port=fromport_temp,
                   to_port=toport_temp,
                   src_group_id=loc)
             except:
-                f(group_id=self.group,
+                f(group_id=groupid,
                   ip_protocol=proto,
                   from_port=fromport_temp,
                   to_port=toport_temp,
@@ -99,12 +98,10 @@ class RemoveRule(ModifyRule):
 
         super(RemoveRule, self).__call__(conn, f)
 
-
     def __repr__(self):
         return "Del rule (%s, %s, %s) from %s" % (
                 self.rule.protocol, self.rule.ports,
                 self.rule.location, self.group)
-
 
 class AddRule(ModifyRule):
     def __call__(self, conn):
@@ -121,7 +118,6 @@ class AddRule(ModifyRule):
         return "Add rule (%s, %s, %s) to %s" % (
                 self.rule.protocol, self.rule.ports,
                 self.rule.location, self.group)
-
 
 rule_attr = ('direction', 'location', 'protocol', 'ports')
 Rule = collections.namedtuple('Rule', rule_attr)
@@ -170,9 +166,9 @@ def get_actions(git_dir, aws_dir):
 
         if git_rules != aws_rules:
             for rule in aws_rules - git_rules:
-                yield RemoveRule(aws_groups[g]['id'], rule)
+                yield RemoveRule(g, rule)
             for rule in git_rules - aws_rules:
-                yield AddRule(aws_groups[g]['id'], rule)
+                yield AddRule(g, rule)
 
 def main(git_repo, region_code, aws_key, aws_secret, dry_run):
     with fetch.vpc(region_code, aws_key, aws_secret) as aws_dir,\
@@ -187,4 +183,3 @@ def main(git_repo, region_code, aws_key, aws_secret, dry_run):
             print(action)
             if not dry_run:
                 action(conn)
-
