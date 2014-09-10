@@ -18,4 +18,9 @@ def dump(s, default_flow_style = True):
         for rule in s['rules']:
             if 'ports' in rule:
                 rule['ports'] = rule['ports'].yaml_str()
+            if 'fromport' in rule:
+                del rule['fromport']
+            if 'toport' in rule:
+                del rule['toport']
+
     return yaml.safe_dump(s, default_flow_style=default_flow_style)
