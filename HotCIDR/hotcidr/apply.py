@@ -59,33 +59,33 @@ class ModifyRule(Action):
             fromport_temp = self.rule.ports.fromport
             toport_temp = self.rule.ports.toport
 
-        groupid = util.get_sgid(conn, self.group)[0]
-
-        if util.is_cidr(loc):
-            f(group_id=groupid,
-              ip_protocol=proto,
-              from_port=fromport_temp,
-              to_port=toport_temp,
-              cidr_ip=loc)
-        else:
-            loc = util.get_sgid(conn, loc)[0]
-
-            #TODO: Handle security groups with the same names
-
-            #Boto uses src_group_id or src_security_group_group_id to mean the
-            #same thing depending on which function is used here.
-            try:
+        groupids = util.get_sgid(conn, self.group)
+        for groupid in groupids:
+            if util.is_cidr(loc):
                 f(group_id=groupid,
                   ip_protocol=proto,
                   from_port=fromport_temp,
                   to_port=toport_temp,
-                  src_group_id=loc)
-            except:
-                f(group_id=groupid,
-                  ip_protocol=proto,
-                  from_port=fromport_temp,
-                  to_port=toport_temp,
-                  src_security_group_group_id=loc)
+                  cidr_ip=loc)
+
+            else:
+                locs = util.get_sgid(conn, loc)
+                for loc in locs:
+                    #Boto uses src_group_id or src_security_group_group_id to mean the
+                    #same thing depending on which function f is used here.
+                    try:
+                        f(group_id=groupid,
+                          ip_protocol=proto,
+                          from_port=fromport_temp,
+                          to_port=toport_temp,
+                          src_group_id=loc)
+
+                    except:
+                        f(group_id=groupid,
+                          ip_protocol=proto,
+                          from_port=fromport_temp,
+                          to_port=toport_temp,
+                          src_security_group_group_id=loc)
 
 class RemoveRule(ModifyRule):
     def __call__(self, conn):
