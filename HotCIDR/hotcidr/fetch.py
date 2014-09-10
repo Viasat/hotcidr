@@ -92,16 +92,19 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
     groups = connection.get_all_security_groups()
 
     for group in groups:
-        if not args['silence']:
-            print('Forming group %s' % str(group.name))
         fn = os.path.join(outdir, relgroupsdir, '%s.yaml' % str(group.name))
 
         if os.path.exists(fn):
             if not args['silence']:
-                print('Duplicated security group: %s. Merging the groups together.' % group.name)
+                duplicated_str = ' and merging duplicated'
+
             rules = state.load(open(fn))['rules']
         else:
             rules = []
+            duplicated_str = ''
+
+        if not args['silence']:
+            print('Forming%s group %s' % (duplicated_str, str(group.name)))
 
         data = {
             'description': group.description.encode('utf-8'),
