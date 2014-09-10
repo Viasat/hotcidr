@@ -1,13 +1,10 @@
 from __future__ import print_function
-import math
 import datetime
+import math
+
 import hotcidr.state
 from hotcidr.modifydatabase import printSinceSpecifiedTime
 from hotcidr.util import *
-
-#Return whether a timestamp is within the range specified by args
-def within_time_range(date):
-    return date >= args['from_time'] and date <= args['to_time']
 
 def get_icmp_control_msg(code):
     #A table of icmp control codes and their description
@@ -152,7 +149,7 @@ def print_rule(rule):
     #Output rule
     output = ''
 
-    if within_time_range(int(rule['date_timestamp'])):
+    if int(rule['date_timestamp']) >= args['from_time'] and int(rule['date_timestamp']) <= args['to_time']:
         if args['output_webserver']:
             output += '\"{action}\",\"{protocol}\",\"{ports}\",\"{direction}\",\"{type_str}\",\"{location}\",\"{createdby}\",\"{createdon}\",\"{approvedby}\",\"{approvedon}\",\"{justification}\",\"{description}\"\n'.format(
                 action = rule['action'],
@@ -188,7 +185,7 @@ def print_rule(rule):
 
     return output
 
-def main(repo = None, from_time = None, to_time = None, output = None, output_webserver = None, selectedgroup = None, sort_chronologically = None, keep_repo = None, silence = None):
+def main(repo = None, from_time = None, to_time = None, vpc_id = None, output = None, output_webserver = None, selectedgroup = None, sort_chronologically = None, keep_repo = None, silence = None):
     #Put arguments into global dictionary
     global args
     args = {}
@@ -227,19 +224,23 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
             print('Warning: from-time argument is not an integer. It should be a timestamp in UTC. It will be set to the current time.', file=sys.stderr)
             args['to_time'] = int(math.floor(time.time()))
 
-    #Get illegal VPC changes
+    #TODO: Get illegal VPC changes
+    '''
     try:
         testDict = printSinceSpecifiedTime(args['to_time'], args['from_time']) 
     except:
         print('Warning: MySQL database with unauthorized rules not found. Continuing without printing', file=sys.stderr)
-        testDict = {}
-        unauthAddedGroupsRules = {}
-        unauthDeletedGroupsRules = {}
+    '''
+    testDict = {}
+    unauthAddedGroupsRules = {}
+    unauthDeletedGroupsRules = {}
 
+    '''
     if 'addedDict' in testDict:
         unauthAddedGroupsRules = testDict['addedDict']
     if 'deletedDict' in testDict:
         unauthDeletedGroupsRules = testDict['deletedDict']
+    '''
 
     #Create output_str as formatted audit output
     output_str = ''
