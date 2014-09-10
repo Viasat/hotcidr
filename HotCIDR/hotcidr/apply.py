@@ -36,10 +36,7 @@ class ModifyInstanceAttribute(Action):
 
     def __call__(self, conn):
         if self.attr == 'groupSet':
-            groups = []
-            for g in self.value:
-                groups.extend(util.get_id_for_group(conn, g))
-            self.value = groups
+            self.value = map(lambda g: util.get_id_for_group(conn, g), self.value)
         conn.modify_instance_attribute(self.inst_id, self.attr, self.value)
 
     def __repr__(self):
@@ -66,33 +63,31 @@ class ModifyRule(Action):
             fromport_temp = self.rule.ports.fromport
             toport_temp = self.rule.ports.toport
 
-        groupids = util.get_id_for_group(conn, self.group)
-        for groupid in groupids:
-            if util.is_cidr(loc):
+        groupid = util.get_id_for_group(conn, self.group)
+        if util.is_cidr(loc):
+            f(group_id=groupid,
+              ip_protocol=proto,
+              from_port=fromport_temp,
+              to_port=toport_temp,
+              cidr_ip=loc)
+
+        else:
+            loc = util.get_id_for_group(conn, loc)
+            #Boto uses src_group_id or src_security_group_group_id to mean the
+            #same thing depending on which function f is used here.
+            try:
                 f(group_id=groupid,
                   ip_protocol=proto,
                   from_port=fromport_temp,
                   to_port=toport_temp,
-                  cidr_ip=loc)
+                  src_group_id=loc)
 
-            else:
-                locs = util.get_id_for_group(conn, loc)
-                for loc in locs:
-                    #Boto uses src_group_id or src_security_group_group_id to mean the
-                    #same thing depending on which function f is used here.
-                    try:
-                        f(group_id=groupid,
-                          ip_protocol=proto,
-                          from_port=fromport_temp,
-                          to_port=toport_temp,
-                          src_group_id=loc)
-
-                    except:
-                        f(group_id=groupid,
-                          ip_protocol=proto,
-                          from_port=fromport_temp,
-                          to_port=toport_temp,
-                          src_security_group_group_id=loc)
+            except:
+                f(group_id=groupid,
+                  ip_protocol=proto,
+                  from_port=fromport_temp,
+                  to_port=toport_temp,
+                  src_security_group_group_id=loc)
 
 class RemoveRule(ModifyRule):
     def __call__(self, conn):

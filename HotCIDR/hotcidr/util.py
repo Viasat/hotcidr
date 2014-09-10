@@ -432,4 +432,4 @@ def get_connection(vpc_id, region, **k):
 
 def get_id_for_group(conn, sgname):
     for sg in conn.get_all_security_groups(filters={'group-name': sgname}):
-        return sg
+        return sg.id
