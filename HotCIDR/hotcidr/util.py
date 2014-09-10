@@ -399,3 +399,25 @@ def repo(repo):
     yield git_dir
     if is_clone_url:
         shutil.rmtree(git_dir)
+
+def get_security_groups(vpc_id, **k)
+    regions = boto.ec2.regions(**k):
+    for r in regions:
+        try:
+            c = boto.ec2.connection.EC2Connection(region=r, **k)
+            groups = c.get_all_security_groups(filter={'vpc-id': vpc_id})
+            for i in groups:
+                yield i # yield from instances
+        except boto.exception.EC2ResponseError:
+            pass
+
+def get_instances(vpc_id, **k)
+    regions = boto.ec2.regions(**k):
+    for r in regions:
+        try:
+            c = boto.ec2.connection.EC2Connection(region=r, **k)
+            groups = c.get_only_instances(filter={'vpc-id': vpc_id})
+            for i in groups:
+                yield i # yield from instances
+        except boto.exception.EC2ResponseError:
+            pass
