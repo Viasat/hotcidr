@@ -317,8 +317,12 @@ def get_added_deleted_rules( git_dir, yamlfile ):
             date = adh.split(';',2)[1]
             commit_hexsha = adh.split(';',2)[2]
 
-            #Get yaml file and load its contents
-            yamlfile_data = git.Git( git_dir ).show(commit_hexsha + ':' + yamlfile)
+            #Get yaml file and load its contents, unless the group doesn't exist in the current commit yet
+            try:
+                yamlfile_data = git.Git( git_dir ).show(commit_hexsha + ':' + yamlfile)
+            except git.exc.GitCommandError:
+                continue
+
             if len(yamlfile_data) == 0:
                 continue
 
