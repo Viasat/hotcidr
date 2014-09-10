@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-from hotcidr.fetchvpc import main
+from hotcidr.fetch import main
 import argparse
 
 #Parse arguments
