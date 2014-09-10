@@ -69,8 +69,12 @@ class ModifyRule(Action):
               to_port=toport_temp,
               cidr_ip=loc)
         else:
-            loc = conn.get_all_security_groups([loc])[0].__dict__['id']
+            loc = util.get_sgid(conn, loc)[0]
 
+            #TODO: Handle security groups with the same names
+
+            #Boto uses src_group_id or src_security_group_group_id to mean the
+            #same thing depending on which function is used here.
             try:
                 f(group_id=self.group,
                   ip_protocol=proto,
