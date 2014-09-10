@@ -47,7 +47,7 @@ def append_to_rules(connection, rules, group, rule, grant, inout_str, nameid_loo
             ('ports', ports.Port(int(rule.from_port), int(rule.to_port)) ),
             ]))
 
-def main(vpc_region_code, output = '', access_id = None, access_key = None, silence = None):
+def main(region_code, vpc_id, output = '', access_id = None, access_key = None, silence = None):
 
     args = {}
     args['output'] = output
@@ -56,7 +56,7 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
     args['access_key'] = access_key
 
     #Check argument validity
-    if not util.is_valid_vpc(vpc_region_code):
+    if not util.is_valid_vpc(region_code):
         print('Error: invalid vpc-region-code.', file=sys.stderr)
         return 1
 
@@ -82,21 +82,21 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
 
     try:
         if not args['access_id'] or not args['access_key']:
-            connection = boto.ec2.connect_to_region(vpc_region_code)
+            connection = boto.ec2.connect_to_region(region_code)
         else:
-            connection = boto.ec2.connect_to_region(vpc_region_code, aws_access_key_id=args['access_id'], aws_secret_access_key=args['access_key'])
+            connection = boto.ec2.connect_to_region(region_code, aws_access_key_id=args['access_id'], aws_secret_access_key=args['access_key'])
     except boto.exception.NoAuthHandlerFound:
         print('Error: boto credentials are invalid. Check your configuration.')
         return 1
 
-    groups = connection.get_all_security_groups()
+    groups = connection.get_all_security_groups(filters={'vpc-id':vpc_id})
 
     #Create a lookup of name given id for each group, to speed up aliasing later
     nameid_lookup = dict()
     for group in groups:
         nameid_lookup[group.id] = group.name
 
-    #Iterate each group
+    #Iterate each group to append rules to the 'rules' variable, then output into the appropriate rules yaml file
     for group in groups:
         fn = os.path.join(outdir, relgroupsdir, '%s.yaml' % str(group.name))
 
@@ -130,6 +130,7 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
         with open(fn, 'w') as out:
             out.write(dump(data))
 
+    #Handle instances in boxes.yaml
     instances = connection.get_only_instances()
 
     instancesDict = dict()
@@ -154,11 +155,12 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
     with open(os.path.join(outdir, 'boxes.yaml'), 'w') as out:
         out.write(dump(instancesDict))
 
+    #Expirations initially empty, but included to make the functionality more obvious
     open(os.path.join(outdir, 'expirations.yaml'), 'w')
 
 @contextlib.contextmanager
-def vpc(region, key, secret):
+def vpc(region, vpc, key, secret):
     tmpdir = tempfile.mkdtemp()
-    main(region, tmpdir, key, secret, True)
+    main(region, vpc, tmpdir, key, secret, True)
     yield tmpdir
     shutil.rmtree(tmpdir)

@@ -210,8 +210,8 @@ class Changes(object):
             return "No changes"
         return ", ".join(r)
 
-def main(git_repo, region_code, aws_key, aws_secret, dry_run):
-    with fetch.vpc(region_code, aws_key, aws_secret) as aws_dir,\
+def main(git_repo, region_code, vpc_id, aws_key, aws_secret, dry_run):
+    with fetch.vpc(region_code, vpc_id, aws_key, aws_secret) as aws_dir,\
          util.repo(git_repo) as git_dir:
         actions = list(get_actions(git_dir, aws_dir))
 

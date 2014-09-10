@@ -10,6 +10,7 @@ parser.add_argument('git_repo', help='Git Repository AWS is based on')
 parser.add_argument('aws_region', help= 'AWS region name')
 parser.add_argument('aws_access_key_id', help='AWS Access Key Id')
 parser.add_argument('aws_secret_access_key', help='AWS Secret Access Key')
+parser.add_argument('--vpc_id', help= 'The vpc-id of the vpc to run apply on. If this is not specified, all vpc-ids will be used.')
 parser.add_argument('--n', help='Dry-run changes, without actually applying them', action='store_true')
 
 args = vars(parser.parse_args())
@@ -17,6 +18,7 @@ args = vars(parser.parse_args())
 main(
     args['git_repo'],
     args['aws_region'],
+    args['vpc_id'],
     args['aws_access_key_id'],
     args['aws_secret_access_key'],
     args['n']

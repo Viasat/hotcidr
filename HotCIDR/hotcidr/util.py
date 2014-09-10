@@ -55,12 +55,12 @@ def load_boxes(d):
 def get_sgid(conn, sgname):
     ids = list()
     for sg in conn.get_all_security_groups(groupnames = [sgname]):
-        ids.append(sg.__dict__['id'])
+        ids.append(sg.id)
     return ids
 
 #Get the security group id(s) based on a security group name
 def get_sgname(conn, sgid):
-    return conn.get_all_security_groups(group_ids = [sgid])[0].__dict__['name']
+    return conn.get_all_security_groups(group_ids = [sgid])[0].name
 
 #Load groups
 def load_groups(d, ext='.yaml'):
