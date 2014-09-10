@@ -8,8 +8,12 @@ from hotcidr import fetch
 from hotcidr import util
 
 class Action(object):
-    def __call__(self):
-        raise NotImplementedError
+    def __call__(self, conn):
+        try:
+            self.run(conn)
+        except:
+            print("Unexpected exception raised. Aborting.")
+            raise
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -22,7 +26,7 @@ class CreateSecurityGroup(Action):
         self.name = name
         self.desc = desc
 
-    def __call__(self, conn):
+    def run(self, conn):
         conn.create_security_group(self.name, self.desc)
 
     def __repr__(self):
@@ -34,7 +38,7 @@ class ModifyInstanceAttribute(Action):
         self.attr = attr
         self.value = value
 
-    def __call__(self, conn):
+    def run(self, conn):
         if self.attr == 'groupSet':
             self.value = map(lambda g: util.get_id_for_group(conn, g), self.value)
         conn.modify_instance_attribute(self.inst_id, self.attr, self.value)
@@ -47,50 +51,40 @@ class ModifyRule(Action):
         self.group = group
         self.rule = rule
 
-    def __call__(self, conn, f):
-        proto = self.rule.protocol
-        if proto == 'all':
-            proto = -1
-
+    def run(self, conn, f):
         loc = self.rule.location
         if loc == 'all':
             loc = '0.0.0.0/0'
 
-        if not self.rule.ports:
-            fromport_temp = -1
-            toport_temp = -1
-        else:
-            fromport_temp = self.rule.ports.fromport
-            toport_temp = self.rule.ports.toport
+        proto = self.rule.protocol
+        if proto == 'all':
+            proto = '-1'
 
-        groupid = util.get_id_for_group(conn, self.group)
+        if self.rule.ports:
+            fromport = self.rule.ports.fromport
+            toport = self.rule.ports.toport
+        else:
+            fromport = -1
+            toport = -1
+
+        k = {
+            'group_id': util.get_id_for_group(conn, self.group),
+            'ip_protocol': proto,
+            'from_port': fromport,
+            'to_port': toport
+        }
         if util.is_cidr(loc):
-            f(group_id=groupid,
-              ip_protocol=proto,
-              from_port=fromport_temp,
-              to_port=toport_temp,
-              cidr_ip=loc)
-
+            k['cidr_ip'] = loc
         else:
-            loc = util.get_id_for_group(conn, loc)
             #Boto uses src_group_id or src_security_group_group_id to mean the
             #same thing depending on which function f is used here.
-            try:
-                f(group_id=groupid,
-                  ip_protocol=proto,
-                  from_port=fromport_temp,
-                  to_port=toport_temp,
-                  src_group_id=loc)
+            k['src_group_id'] = loc
+            k['src_security_group_group_id'] = loc
 
-            except:
-                f(group_id=groupid,
-                  ip_protocol=proto,
-                  from_port=fromport_temp,
-                  to_port=toport_temp,
-                  src_security_group_group_id=loc)
+        f(**k)
 
 class RemoveRule(ModifyRule):
-    def __call__(self, conn):
+    def run(self, conn):
         if self.rule.direction == 'inbound':
             f = conn.revoke_security_group
         elif self.rule.direction == 'outbound':
@@ -98,7 +92,7 @@ class RemoveRule(ModifyRule):
         else:
             raise Exception("Invalid direction %s" % self.rule.direction)
 
-        super(RemoveRule, self).__call__(conn, f)
+        super(RemoveRule, self).run(conn, f)
 
     def __repr__(self):
         return "Del rule (%s, %s, %s) from %s" % (
@@ -106,7 +100,7 @@ class RemoveRule(ModifyRule):
                 self.rule.location, self.group)
 
 class AddRule(ModifyRule):
-    def __call__(self, conn):
+    def run(self, conn):
         if self.rule.direction == 'inbound':
             f = conn.authorize_security_group
         elif self.rule.direction == 'outbound':
@@ -114,7 +108,7 @@ class AddRule(ModifyRule):
         else:
             raise Exception("Invalid direction %s" % self.rule.direction)
 
-        super(AddRule, self).__call__(conn, f)
+        super(AddRule, self).run(conn, f)
 
     def __repr__(self):
         return "Add rule (%s, %s, %s) to %s" % (
@@ -141,10 +135,10 @@ def get_actions(git_dir, aws_dir):
     # Add missing groups to AWS
     for g in git_groups:
         if g not in aws_groups:
-            print("Adding group %s to AWS" % g)
-            desc = 'Automatically created by HotCIDR'
             if 'description' in git_groups[g]:
                 desc = git_groups[g]['description']
+            else:
+                desc = "Automatically created by HotCIDR"
             yield CreateSecurityGroup(g, desc)
 
     # Update associated security groups for instances
@@ -199,7 +193,6 @@ def changes(actions):
         return "No changes"
     return ", ".join(r)
 
-
 def main(git_repo, region_code, vpc_id, aws_key, aws_secret, dry_run):
     with fetch.vpc(region_code, vpc_id, aws_key, aws_secret) as aws_dir,\
          util.repo(git_repo) as git_dir:
@@ -207,6 +200,9 @@ def main(git_repo, region_code, vpc_id, aws_key, aws_secret, dry_run):
 
         conn = util.get_connection(vpc_id, region_code,
                 aws_access_key_id=aws_key, aws_secret_access_key=aws_secret)
+        if not conn:
+            print("Could not establish conection wtih AWS")
+            sys.exit(1)
 
         count = len(actions)
         for num, action in enumerate(actions, 1):
