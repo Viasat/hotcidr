@@ -38,7 +38,7 @@ class ModifyInstanceAttribute(Action):
         if self.attr == 'groupSet':
             groups = []
             for g in self.value:
-                groups.extend(util.get_sgid(conn, g))
+                groups.extend(util.get_id_for_group(conn, g))
             self.value = groups
         conn.modify_instance_attribute(self.inst_id, self.attr, self.value)
 
@@ -66,7 +66,7 @@ class ModifyRule(Action):
             fromport_temp = self.rule.ports.fromport
             toport_temp = self.rule.ports.toport
 
-        groupids = util.get_sgid(conn, self.group)
+        groupids = util.get_id_for_group(conn, self.group)
         for groupid in groupids:
             if util.is_cidr(loc):
                 f(group_id=groupid,
@@ -76,7 +76,7 @@ class ModifyRule(Action):
                   cidr_ip=loc)
 
             else:
-                locs = util.get_sgid(conn, loc)
+                locs = util.get_id_for_group(conn, loc)
                 for loc in locs:
                     #Boto uses src_group_id or src_security_group_group_id to mean the
                     #same thing depending on which function f is used here.
@@ -210,9 +210,8 @@ def main(git_repo, region_code, vpc_id, aws_key, aws_secret, dry_run):
          util.repo(git_repo) as git_dir:
         actions = list(get_actions(git_dir, aws_dir))
 
-        conn = boto.ec2.connect_to_region(region_code,
-                                          aws_access_key_id=aws_key,
-                                          aws_secret_access_key=aws_secret)
+        conn = util.get_connection(vpc_id, region_code,
+                aws_access_key_id=aws_key, aws_secret_access_key=aws_secret)
 
         count = len(actions)
         for num, action in enumerate(actions, 1):

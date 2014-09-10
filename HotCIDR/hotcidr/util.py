@@ -1,17 +1,19 @@
 from __future__ import print_function
 from shutil import rmtree
 from hotcidr import state
+import boto.ec2
+import boto.vpc
 import contextlib
 import git
 import hashlib
-import os
-import sys
-import time
-import requests
 import json
+import os
+import requests
 import shutil
-import yaml
+import sys
 import tempfile
+import time
+import yaml
 
 #This function is different than isinstance(n,int) in that it will pass for strings: e.g. '1'
 def isint(n):
@@ -404,31 +406,30 @@ def repo(repo):
     if is_clone_url:
         shutil.rmtree(git_dir)
 
-def get_connection(vpc_id, **k):
-    regions = boto.vpc.regions(**k)
-    for region in regions:
-        c = boto.vpc.connect_to_region(region.name, **k)
-        if c:
-            try:
-                vpcs = dict((x.id, x) for x in c.get_all_vpcs())
+def get_connection(vpc_id, region, **k):
+    c = boto.vpc.connect_to_region(region, **k)
+    if c:
+        vpcs = dict((x.id, x) for x in c.get_all_vpcs())
 
-                if vpc_id in vpcs:
-                    conn = vpcs[vpc_id].connection
+        if vpc_id in vpcs:
+            conn = vpcs[vpc_id].connection
 
-                    # Monkey patch get_only_instances/get_all_security_groups
-                    orig_get_only_instances = conn.get_only_instances
-                    orig_get_all_security_groups = conn.get_all_security_groups
-                    def get_only_instances(**k):
-                        k.setdefault('filters', {})
-                        k['filters'].setdefault('vpc-id', vpc_id)
-                        return orig_get_only_instances(**k)
-                    def get_all_security_groups(**k):
-                        k.setdefault('filters', {})
-                        k['filters'].setdefault('vpc-id', vpc_id)
-                        return orig_get_all_security_groups(**k)
-                    conn.get_only_instances = get_only_instances
-                    conn.get_all_security_groups = get_all_security_groups
+            # Monkey patch get_only_instances/get_all_security_groups
+            orig_get_only_instances = conn.get_only_instances
+            orig_get_all_security_groups = conn.get_all_security_groups
+            def get_only_instances(**k):
+                k.setdefault('filters', {})
+                k['filters'].setdefault('vpc-id', vpc_id)
+                return orig_get_only_instances(**k)
+            def get_all_security_groups(**k):
+                k.setdefault('filters', {})
+                k['filters'].setdefault('vpc-id', vpc_id)
+                return orig_get_all_security_groups(**k)
+            conn.get_only_instances = get_only_instances
+            conn.get_all_security_groups = get_all_security_groups
 
-                    return conn
-            except boto.exception.EC2ResponseError:
-                pass
+            return conn
+
+def get_id_for_group(conn, sgname):
+    for sg in conn.get_all_security_groups(filters={'group-name': sgname}):
+        return sg
