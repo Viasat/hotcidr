@@ -13,7 +13,7 @@ import yaml
 def dump(x):
     return state.dump(x, default_flow_style=False)
 
-def append_to_rules(rules, group, rule, grant, inout_str):
+def append_to_rules(connection, rules, group, rule, grant, inout_str):
     srcip_str = None
 
     if hasattr(grant, 'cidr_ip'):
@@ -21,7 +21,7 @@ def append_to_rules(rules, group, rule, grant, inout_str):
             srcip_str = str(grant.cidr_ip)
 
     if not srcip_str:
-        srcip_str = group.name
+        srcip_str = util.get_sgname(connection, grant.group_id)
 
     none_string = 'None'
 
@@ -93,12 +93,16 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
 
     for group in groups:
         if not args['silence']:
-            print('Forming group %s' % str(group.id))
+            print('Forming group %s' % str(group.name))
         fn = os.path.join(outdir, relgroupsdir, '%s.yaml' % str(group.name))
 
-        rules = []
+        if os.path.exists(fn):
+            print('Duplicated security group: %s. Merging the groups together.' % group.name)
+            rules = state.load(open(fn))['rules']
+        else:
+            rules = []
+
         data = {
-            'id': group.id.encode('utf-8'),
             'description': group.description.encode('utf-8'),
             'rules': rules
         }
@@ -106,12 +110,12 @@ def main(vpc_region_code, output = '', access_id = None, access_key = None, sile
         #Inbound rules
         for rule in group.rules:
             for grant in rule.grants:
-                append_to_rules(rules, group, rule, grant, 'inbound')
+                append_to_rules(connection, rules, group, rule, grant, 'inbound')
 
         #Outbound rules
         for rule in group.rules_egress:
             for grant in rule.grants:
-                append_to_rules(rules, group, rule, grant, 'outbound')
+                append_to_rules(connection, rules, group, rule, grant, 'outbound')
 
         with open(fn, 'w') as out:
             out.write(dump(data))
