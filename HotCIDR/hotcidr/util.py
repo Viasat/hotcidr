@@ -47,11 +47,20 @@ def is_valid_vpc(vpc):
 
 rule_fields = ['direction','protocol','location']
 
-
 #Load boxes
 def load_boxes(d):
     return state.load(open(os.path.join(d, 'boxes.yaml')))
 
+#Get the security group id(s) based on a security group name
+def get_sgid(conn, sgname):
+    ids = list()
+    for sg in conn.get_all_security_groups(groupnames = [sgname]):
+        ids.append(sg.__dict__['id'])
+    return ids
+
+#Get the security group id(s) based on a security group name
+def get_sgname(conn, sgid):
+    return conn.get_all_security_groups(group_ids = [sgid])[0].__dict__['name']
 
 #Load groups
 def load_groups(d, ext='.yaml'):
@@ -64,7 +73,6 @@ def load_groups(d, ext='.yaml'):
             group_name = group[:-len(ext)]
             r[group_name] = state.load(open(f))
     return r
-
 
 #Get a hash string from a rule
 def get_hash_from_rule(rule_orig):
