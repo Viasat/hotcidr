@@ -197,6 +197,8 @@ def changes(actions):
             else:
                 r.append(x + "s" + y)
 
+    if not r:
+        return "No changes"
     return ", ".join(r)
 
 
