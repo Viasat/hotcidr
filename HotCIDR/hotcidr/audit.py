@@ -112,9 +112,9 @@ def format_rule(rule, yamlfile, createdby, createdon, approvedby, approvedon, ac
             rule['toport'] = corrupted_str
 
         if rule['fromport'] == rule['toport']:
-            ports_str = rule['fromport']
+            ports_str = (rule['fromport'])
         else:
-            ports_str = rule['fromport'] + '-' + rule['toport']
+            ports_str = str(rule['fromport']) + '-' + str(rule['toport'])
  
     #Format created/approved on
     try:
@@ -325,7 +325,8 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
             continue
 
         #Print group name
-        output_str += rules['id'] + ',' + groups[group].split('/')[1].split('.')[0] + '\n'
+        #TODO: Append get_sgid to the beginning of this. Requires connection, which requires args for aws access keys
+        output_str += groups[group].split('/')[1].split('.')[0] + '\n'
 
         #Print associated machines
         output_str += 'Machines:\n'
