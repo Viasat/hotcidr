@@ -168,7 +168,7 @@ def get_actions(old_dir, new_dir):
             for rule in new_rules - old_rules:
                 yield AddRule(g, rule)
 
-def changes(actions):
+def changes(actions, unauthorized=0):
     objs = dict(zip([
         (CreateSecurityGroup, "%d group(s) created"),
         (ModifyInstanceAttribute, "%d instance(s) updated"),
@@ -190,6 +190,12 @@ def changes(actions):
             else:
                 r.append(x + "s" + y)
 
+    if unauthorized:
+        if unauthorized == 1:
+            r.append("1 unauthorized change found")
+        else:
+            r.append("%d unauthorized changes found" % unauthorized)
+
     if not r:
         return "No changes"
     return ", ".join(r)
@@ -198,10 +204,14 @@ def main(git_repo, region_code, vpc_id, aws_key, aws_secret, dry_run, expected_r
     with fetch.vpc(region_code, vpc_id, aws_key, aws_secret) as aws_dir,\
          util.repo(git_repo) as git_dir:
         if expected_repo:
-            with util.repo(git_repo, sha1=expected_repo) as exp_dir:
-                unauthorized_actions = list(get_actions(exp_dir, aws_dir))
-                for action in unauthorized_actions:
-                    print("Unauthorized action: %s" % action)
+            try:
+                with util.repo(git_repo, sha1=expected_repo) as exp_dir:
+                    unauthorized_actions = list(get_actions(exp_dir, aws_dir))
+                    for action in unauthorized_actions:
+                        print("Unauthorized action: %s" % action)
+            except git.exc.GitCommandError:
+                print("Could not check for unauthorized changes.")
+                print("Have you recently changed git repositories?")
 
         actions = list(get_actions(aws_dir, git_dir))
 
@@ -219,4 +229,4 @@ def main(git_repo, region_code, vpc_id, aws_key, aws_secret, dry_run, expected_r
                 action(conn)
 
         print("hc-apply complete against %s" % util.get_hexsha(git_dir))
-        print(changes(actions))
+        print(changes(actions, unauthorized=len(unauthorized_actions)))
