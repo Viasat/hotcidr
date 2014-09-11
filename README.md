@@ -109,7 +109,7 @@ There are two ways to cause a rule to expire:
 1. Add an 'expiration' field to any rule in a group's yaml file.
 2. Add matching rule fields into expirations.yaml as criteria for expirations
 
-Here is an example of the first kind of expiration.
+Here is an example of the first kind of expiration:
 
 ```
 security_group_1.yaml
@@ -123,7 +123,7 @@ rules:
 
 This will cause this single, specific rule to be removed 1 day after it was committed.
 
-Here is an example of the second kind of expiration.
+Here is an example of the second kind of expiration:
 
 ```
 expirations.yaml
