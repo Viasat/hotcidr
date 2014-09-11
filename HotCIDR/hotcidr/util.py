@@ -48,7 +48,7 @@ def is_valid_vpc(vpc):
 
     return vpc in valid_regions
 
-rule_fields = ['direction','protocol','location']
+expected_rule_fields = ['direction','protocol','location']
 
 #Load boxes
 def load_boxes(d):
@@ -81,7 +81,7 @@ def load_groups(d, ext='.yaml'):
 def get_hash_from_rule(rule_orig):
     rule = rule_orig.copy()
 
-    for field in rule_fields:
+    for field in expected_rule_fields:
         if field not in rule:
             rule[field] = ''
 
@@ -301,6 +301,11 @@ def get_commit_approved_authdate(commit_hexsha, git_dir, yamlfile):
     #The commit does not exist in the repo, or something is horribly wrong in the repo or this code
     return {'author':'n/a', 'date':'n/a'}
 
+#Given a rules yaml file in a git directory, return a dictionary of rules that represents the history adding/deleting of rules
+#Within the dictionary, each rule will have three fields added: author & date (of the action), and hexsha (when the action was committed)
+#Added: Rules that exist in the yaml currently
+#Deleted: Rules that were deleted from the yaml
+#Added previously: For each deleted rule, there will be an added_previously rule, including the author/date/commit of the original addition
 def get_added_deleted_rules( git_dir, yamlfile ):
     added_deleted_rules = {'added':[], 'deleted':[], 'added_previously':[]}
     commits_rules_list = []
