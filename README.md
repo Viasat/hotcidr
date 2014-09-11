@@ -55,10 +55,10 @@ See [README](audit-webapp/README.md)
 Fetch the VPC
 
 ```
-% hc-fetch <vpc-region-code> <output-directory> --aws-access-key-id AWS_ACCESS_KEY_ID --aws-secret-access-key AWS_SECRET_ACCESS_KEY
+% hc-fetch <vpc-region-code> <output-directory> AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
 
 e.g.
-% hc-fetch us-west-2 ./us-west-2-core --aws-access-key-id AWS_ACCESS_KEY_ID --aws-secret-access-key AWS_SECRET_ACCESS_KEY
+% hc-fetch us-west-2 ./us-west-2-core AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 
 ```
 
@@ -69,7 +69,7 @@ Setup as git repository
 fw_rules% git init
 fw_rules% git add .
 fw_rules% git commit -m "Initial commit"
-fw_rules% git remote add origin YOUR_REPO_URL
+fw_rules% git remote add origin <YOUR_REPO_URL>
 fw_rules% git push -u origin master
 ```
 
@@ -89,14 +89,69 @@ This script will maintain consistency between GitRepository and AWS while loggin
 Documentation Notes
 -------
 ### Apply
-Apply will not update security-groups that are not associated with an instance, nor rules that are incorrectly formatted.
+Apply takes a valid ruleset repository and applies the rules to the EC2 VPC.
 
-### Audit Webapp
+Apply will not work for rules that are incorrectly formatted.
+
+### Audit
 Auditing can be done from the [auditing webapp](audit-webapp/README.md), or from the command line where HotCIDR is installed:
 
     hc-audit <repo>
 
 The <repo> can be either a local git repository (a local directory) or a remote git repository (a git url, either https or ssh).
+
+Note that in the dashboard, unauthorized rules will be printed, which is not true for the command line. This is because the dashboard automatically configures the MySQL database necessary for unauthorized rules. The code is commented out in the apply script, if this functionality is added in the future.
+
+### Expirations
+
+For testing or safety purposes, certain rules can be set to expire. For example, a rule allowing all inbound traffic with any port and protocol is probably meant for temporary testing, and can be tagged to expire after a reasonable time period.
+
+The script hc-deleteexpired must be run periodically on the desired repo. It will look for rule expirations, and then commit and push changes to the repo automatically. Because rule expiration is automatic and can delete things from the repo, **exercise caution**.
+
+There are two ways to cause a rule to expire:
+
+1. Add an 'expiration' field to any rule in a group's yaml file.
+2. Add matching rule fields into expirations.yaml as criteria for expirations
+
+Here is an example of the first kind of expiration:
+
+```
+security_group_1.yaml
+---
+rules:
+- direction: inbound
+  protocol: all
+  location: 0.0.0.0/0
+  expiration: 86400
+```
+
+This will cause this single, specific rule to be removed 1 day after it was committed.
+
+Here is an example of the second kind of expiration:
+
+```
+expirations.yaml
+---
+rules:
+- direction: inbound
+  protocol: all
+  location: 0.0.0.0/0
+  expiration: 86400 
+```
+
+This example will cause any rule in the entire repository matching the direction, protocol and location fields to be removed 1 day after it was committed.
+
+**Be careful with this**, as writing something such as
+
+```
+expirations.yaml
+---
+rules:
+- ports: 443
+  expiration: 1
+```
+
+Will cause every rule in the entire repo with 'ports: 443' to be deleted instantly. 
 
 
 Authors
