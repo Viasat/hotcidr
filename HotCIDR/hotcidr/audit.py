@@ -185,7 +185,7 @@ def print_rule(rule, from_time, to_time, output_webserver):
 
     return output
 
-def main(repo, from_time, to_time, vpc_id, output, output_webserver, selectedgroup, sort_chronologically, keep_repo, silence):
+def main(repo, from_time, to_time, vpc_id, output, output_webserver, selectedgroup, sort_chronologically, silence):
     #Check repo argument
     repo, is_clone_url = get_valid_repo( repo )
     if not repo:
@@ -444,7 +444,7 @@ def main(repo, from_time, to_time, vpc_id, output, output_webserver, selectedgro
         print(output_str)
 
     #Remove temporary git repo
-    if is_clone_url and not keep_repo:
+    if is_clone_url:
         rmtree(repo)
 
     if not silence:

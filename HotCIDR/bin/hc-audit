@@ -13,7 +13,6 @@ parser.add_argument('--output', help='Output audit at the absolute path. E.G. /h
 parser.add_argument('--output-webserver', help='Format output for the webserver, in CSV format', action='store_true')
 parser.add_argument('--group', help='Audit only the specified group')
 parser.add_argument('--sort-chronologically', help='Sort the audit output chronologically, rather than by action', action='store_true')
-parser.add_argument('--keep-repo', help='Do not remove temporary repo after audit script finishes', action='store_true')
 parser.add_argument('--silence', help='Silence progress and processing strings', action='store_true')
 
 args = vars(parser.parse_args())
@@ -27,6 +26,5 @@ main(
     args['output_webserver'],
     args['group'],
     args['sort_chronologically'],
-    args['keep_repo'],
     args['silence']
 )
