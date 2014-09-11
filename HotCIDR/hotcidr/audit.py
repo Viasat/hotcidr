@@ -1,13 +1,10 @@
 from __future__ import print_function
-import math
 import datetime
+import math
+
 import hotcidr.state
 from hotcidr.modifydatabase import printSinceSpecifiedTime
 from hotcidr.util import *
-
-#Return whether a timestamp is within the range specified by args
-def within_time_range(date):
-    return date >= args['from_time'] and date <= args['to_time']
 
 def get_icmp_control_msg(code):
     #A table of icmp control codes and their description
@@ -40,7 +37,7 @@ def get_icmp_control_msg(code):
         return 'n/a'
 
 #Format a rule so that it is ready to be printed in print_rule
-def format_rule(rule, yamlfile, createdby, createdon, approvedby, approvedon, action):
+def format_rule(rule, repo, yamlfile, createdby, createdon, approvedby, approvedon, action):
     #Get the rule parameters, or determine if corrupted (any fields are missing)
     corrupted = False
     corrupted_str = 'n/a'
@@ -86,7 +83,7 @@ def format_rule(rule, yamlfile, createdby, createdon, approvedby, approvedon, ac
     
     #Format justification, possibly getting a commit message
     if 'hexsha' in rule:
-        commit_message = get_git_commit(rule['hexsha'], args['repo'], yamlfile)
+        commit_message = get_git_commit(rule['hexsha'], repo, yamlfile)
     else:
         commit_message = None
 
@@ -95,7 +92,7 @@ def format_rule(rule, yamlfile, createdby, createdon, approvedby, approvedon, ac
     elif not 'justification' in rule and commit_message:
         rule['justification'] = commit_message
     elif 'justification' in rule and commit_message:
-        rule['justification'] += ' (commit message: \"' + commit_message + '\")'
+        rule['justification'] += ' (commit message: \'' + commit_message + '\')'
    
     #Format ports_str
     if rule['protocol'] == 'icmp':
@@ -148,12 +145,12 @@ def format_rule(rule, yamlfile, createdby, createdon, approvedby, approvedon, ac
     return rule
 
 #Print a rule in the correct format
-def print_rule(rule): 
+def print_rule(rule, from_time, to_time, output_webserver): 
     #Output rule
     output = ''
 
-    if within_time_range(int(rule['date_timestamp'])):
-        if args['output_webserver']:
+    if int(rule['date_timestamp']) >= from_time and int(rule['date_timestamp']) <= to_time:
+        if output_webserver:
             output += '\"{action}\",\"{protocol}\",\"{ports}\",\"{direction}\",\"{type_str}\",\"{location}\",\"{createdby}\",\"{createdon}\",\"{approvedby}\",\"{approvedon}\",\"{justification}\",\"{description}\"\n'.format(
                 action = rule['action'],
                 protocol = rule['protocol'],
@@ -188,72 +185,63 @@ def print_rule(rule):
 
     return output
 
-def main(repo = None, from_time = None, to_time = None, output = None, output_webserver = None, selectedgroup = None, sort_chronologically = None, keep_repo = None, silence = None):
-    #Put arguments into global dictionary
-    global args
-    args = {}
-    args['repo'] = repo
-    args['from_time'] = from_time  
-    args['to_time'] = to_time
-    args['output'] = output
-    args['output_webserver'] = output_webserver
-    args['group'] = selectedgroup
-    args['sort_chronologically'] = sort_chronologically
-    args['keep_repo'] = keep_repo
-    args['silence'] = silence
-
+def main(repo, from_time, to_time, vpc_id, output, output_webserver, selectedgroup, sort_chronologically, keep_repo, silence):
     #Check repo argument
-    args['repo'], is_clone_url = get_valid_repo( args['repo'] )
-    if not args['repo']:
+    repo, is_clone_url = get_valid_repo( repo )
+    if not repo:
         print('Error: invalid repo specified', file=sys.stderr)
         return 1
 
     #Format and check from and to time
-    if not args['from_time']:
-        args['from_time'] = 0
+    if not from_time:
+        from_time = 0
     else:
-        if isint(args['from_time']):
-            args['from_time'] = int(args['from_time'])
+        if isint(from_time):
+            from_time = int(from_time)
         else:
             print('Warning: from-time argument is not an integer. It should be a timestamp in UTC. It will be set to 0.', file=sys.stderr)
-            args['from_time'] = 0
+            from_time = 0
 
-    if not args['to_time']:
-        args['to_time'] = int(math.floor(time.time()))
+    if not to_time:
+        to_time = int(math.floor(time.time()))
     else:
-        if isint(args['to_time']):
-            args['to_time'] = int(args['to_time'])
+        if isint(to_time):
+            to_time = int(to_time)
         else:
             print('Warning: from-time argument is not an integer. It should be a timestamp in UTC. It will be set to the current time.', file=sys.stderr)
-            args['to_time'] = int(math.floor(time.time()))
+            to_time = int(math.floor(time.time()))
 
-    #Get illegal VPC changes
+    #TODO: Get illegal VPC changes
+    '''
     try:
-        testDict = printSinceSpecifiedTime(args['to_time'], args['from_time']) 
+        testDict = printSinceSpecifiedTime(to_time, from_time) 
     except:
         print('Warning: MySQL database with unauthorized rules not found. Continuing without printing', file=sys.stderr)
-        testDict = {}
-        unauthAddedGroupsRules = {}
-        unauthDeletedGroupsRules = {}
+    '''
+    testDict = {}
+    unauthAddedGroupsRules = {}
+    unauthDeletedGroupsRules = {}
 
+    '''
     if 'addedDict' in testDict:
         unauthAddedGroupsRules = testDict['addedDict']
     if 'deletedDict' in testDict:
         unauthDeletedGroupsRules = testDict['deletedDict']
+    '''
 
     #Create output_str as formatted audit output
     output_str = ''
 
-    if args['output_webserver']:
+    if output_webserver:
         output_str += '---\n'
 
     #Get dict: key:groups, value:associated boxes' cidr ip
     boxgroups = {}
     try:
-        boxesyaml = file( os.path.join(args['repo'], 'boxes.yaml') , 'r')
+        boxesyaml = file( os.path.join(repo, 'boxes.yaml') , 'r')
         boxes = hotcidr.state.load( boxesyaml )
     except IOError:
-        print('Warning: ' + os.path.join(args['repo'], 'boxes.yaml') + ' is missing. Audit output will have no instances listed.', file=sys.stderr)
+        print('Warning: ' + os.path.join(repo, 'boxes.yaml') + ' is missing. Audit output will have no instances listed.', file=sys.stderr)
         boxes = []
     except yaml.scanner.ScannerError as e:
         print('Warning: boxes.yaml is not properly formatted:\n' + str(e), file=sys.stderr)
@@ -279,13 +267,13 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
                     boxgroups[boxgroup].append( boxes[box]['tags']['Name'] )
 
     #Get groups and print auditing info per group OR print audit info for specified file
-    if args['group']:
-        if not args['group'].endswith('.yaml'):
-            args['group'] += '.yaml'
+    if selectedgroup:
+        if not selectedgroup.endswith('.yaml'):
+            selectedgroup += '.yaml'
 
-        groups = { args['group'] : os.path.join('groups', args['group']) }
+        groups = { selectedgroup : os.path.join('groups', selectedgroup) }
     else:
-        groups = get_groups_dict(args['repo'])
+        groups = get_groups_dict(repo)
 
     groups_num = len(groups)
     i = 0
@@ -298,29 +286,29 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
 
         #Print progress
         i += 1
-        if not args['silence']:
+        if not silence:
             print('%s%% Processing %s' % (str(int(100*i/groups_num)), group), file=sys.stderr)
         sys.stderr.flush()
 
         #Print line seperators 
         if i > 1:
-            if args['output_webserver']:
+            if output_webserver:
                 output_str += '---\n'
             else:
                 output_str += '\n'
 
         #Load yaml file
         try:
-            yamlfile = open( os.path.join(args['repo'], groups[group]) , 'r')
+            yamlfile = open( os.path.join(repo, groups[group]) , 'r')
             rulesyaml = yamlfile.read()
             yamlfile.close()
             rules = hotcidr.state.load( rulesyaml )
         except IOError:
-            print('Warning: ' + os.path.join(args['repo'], groups[group]) + ' is missing.', file=sys.stderr)
+            print('Warning: ' + os.path.join(repo, groups[group]) + ' is missing.', file=sys.stderr)
             print('Skipping group; it will not be included in the audit output', file=sys.stderr)
             continue
         except yaml.scanner.ScannerError as e:
-            print('Warning: ' + os.path.join(args['repo'], groups[group]) + ' is not properly formatted:\n' + str(e), file=sys.stderr)
+            print('Warning: ' + os.path.join(repo, groups[group]) + ' is not properly formatted:\n' + str(e), file=sys.stderr)
             print('Skipping group; it will not be included in the audit output', file=sys.stderr)
             continue
 
@@ -331,7 +319,7 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
         #Print associated machines
         output_str += 'Machines:\n'
         if group in boxgroups:
-            if args['output_webserver']:
+            if output_webserver:
                 for boxg in boxgroups[group]:
                     output_str += boxg 
 
@@ -341,17 +329,17 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
                 for boxg in boxgroups[group]:
                     output_str += '\t' + boxg + '\n'
         
-        if args['output_webserver']:
+        if output_webserver:
             output_str += '\n'
 
         #Setup necessary data and headers
-        added_deleted_rules = get_added_deleted_rules( args['repo'], groups[group] )
+        added_deleted_rules = get_added_deleted_rules( repo, groups[group] )
         formatted_rules = []
 
-        if args['output_webserver']:
+        if output_webserver:
             output_str += 'Action,Protocol,Ports,Direction,Type,Location,Changed by,Changed on,Approved by,Approved on,Justification,Description\n'
         else:
-            if not args['sort_chronologically']:
+            if not sort_chronologically:
                 output_str += 'Rules added:\n'
             else:
                 output_str += 'Rules:\n'
@@ -362,41 +350,41 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
             if len(rule.keys()) == 3 and 'hexsha' in rule and 'date' in rule and 'author' in rule:
                 continue
 
-            approved_authdate = get_commit_approved_authdate(rule['hexsha'], args['repo'], groups[group])
-            formatted_rule = format_rule(rule, groups[group], rule['author'], rule['date'], approved_authdate['author'], approved_authdate['date'], 'added')
+            approved_authdate = get_commit_approved_authdate(rule['hexsha'], repo, groups[group])
+            formatted_rule = format_rule(rule, repo, groups[group], rule['author'], rule['date'], approved_authdate['author'], approved_authdate['date'], 'added')
 
-            if not args['sort_chronologically']:
-                output_str += print_rule(formatted_rule)
+            if not sort_chronologically:
+                output_str += print_rule(formatted_rule, from_time, to_time, output_webserver)
             else:
                 formatted_rules.append(formatted_rule)
 
             approved_authdate = {}
 
         #Get per-group rules that were added (existed in a past version of the yaml file)
-        if not args['output_webserver'] and not args['sort_chronologically']:
+        if not output_webserver and not sort_chronologically:
             output_str += 'Rules previously added:\n'
 
         for rule in added_deleted_rules['added_previously']:
-            approved_authdate = get_commit_approved_authdate(rule['hexsha'], args['repo'], groups[group])
-            formatted_rule = format_rule(rule, groups[group], rule['author'], rule['date'], approved_authdate['author'], approved_authdate['date'], 'added previously')
+            approved_authdate = get_commit_approved_authdate(rule['hexsha'], repo, groups[group])
+            formatted_rule = format_rule(rule, repo, groups[group], rule['author'], rule['date'], approved_authdate['author'], approved_authdate['date'], 'added previously')
 
-            if not args['sort_chronologically']:
-                output_str += print_rule(formatted_rule)
+            if not sort_chronologically:
+                output_str += print_rule(formatted_rule, from_time, to_time, output_webserver)
             else:
                 formatted_rules.append(formatted_rule)
 
             approved_authdate = {} #For debugging, to make mistakes obvious
 
         #Get per-group rules that are deleted (existed in a past version of the yaml file)
-        if not args['output_webserver'] and not args['sort_chronologically']:
+        if not output_webserver and not sort_chronologically:
             output_str += 'Rules deleted:\n'
 
         for rule in added_deleted_rules['deleted']:
-            approved_authdate = get_commit_approved_authdate(rule['hexsha'], args['repo'], groups[group])
-            formatted_rule = format_rule(rule, groups[group], rule['author'], rule['date'], approved_authdate['author'], approved_authdate['date'], 'deleted')
+            approved_authdate = get_commit_approved_authdate(rule['hexsha'], repo, groups[group])
+            formatted_rule = format_rule(rule, repo, groups[group], rule['author'], rule['date'], approved_authdate['author'], approved_authdate['date'], 'deleted')
 
-            if not args['sort_chronologically']:
-                output_str += print_rule(formatted_rule)
+            if not sort_chronologically:
+                output_str += print_rule(formatted_rule, from_time, to_time, output_webserver)
             else:
                 formatted_rules.append(formatted_rule)
 
@@ -404,32 +392,32 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
 
         #Get unauthorized rules
         if group in unauthAddedGroupsRules:
-            if not args['output_webserver'] and not args['sort_chronologically']:
+            if not output_webserver and not sort_chronologically:
                 output_str += 'Unauthorized rules created:\n'
 
             for unauthAddedRule in unauthAddedGroupsRules[group]:
-                formatted_rule = format_rule(unauthAddedRule, groups[group], 'unknown', unauthAddedRule['secondsAgo'], 'no one', 'n/a', 'unauthorized add')
+                formatted_rule = format_rule(unauthAddedRule, repo, groups[group], 'unknown', unauthAddedRule['secondsAgo'], 'no one', 'n/a', 'unauthorized add')
 
-                if not args['sort_chronologically']:
-                    output_str += print_rule(formatted_rule)
+                if not sort_chronologically:
+                    output_str += print_rule(formatted_rule, from_time, to_time, output_webserver)
                 else:
                     formatted_rules.append(formatted_rule)
 
         #Get unauthorized deleted rules
         if group in unauthDeletedGroupsRules:
-            if not args['output_webserver'] and not args['sort_chronologically']:
+            if not output_webserver and not sort_chronologically:
                 output_str += 'Unauthorized rules deleted:\n'
 
             for unauthDeletedRule in unauthDeletedGroupsRules[group]:
-                formatted_rule = format_rule(unauthDeletedRule, groups[group], 'unknown', unauthDeletedRule['secondsAgo'], 'no one', 'n/a', 'unauthorized delete')
+                formatted_rule = format_rule(unauthDeletedRule, repo, groups[group], 'unknown', unauthDeletedRule['secondsAgo'], 'no one', 'n/a', 'unauthorized delete')
 
-                if not args['sort_chronologically']:
-                    output_str += print_rule(formatted_rule)
+                if not sort_chronologically:
+                    output_str += print_rule(formatted_rule, from_time, to_time, output_webserver)
                 else:
                     formatted_rules.append(formatted_rule)
 
         #Sort formatted_rules chronologically
-        if args['sort_chronologically']:
+        if sort_chronologically:
             sort_by_key = 'approved_date'
 
             formatted_dict = {}
@@ -441,21 +429,22 @@ def main(repo = None, from_time = None, to_time = None, output = None, output_we
 
             for timestamp in sorted(formatted_dict, reverse=True):
                 for formatted_rule in formatted_dict[timestamp]:
-                    output_str += print_rule(formatted_rule)
+                    output_str += print_rule(formatted_rule, from_time, to_time, output_webserver)
 
     #Write file to output if specified, or else print string
-    if args['output']:
-        f = open(args['output'], 'w')
+    if output:
+        f = open(output, 'w')
         f.write(output_str)
         f.close()
     else:
         print(output_str)
 
     #Remove temporary git repo
-    if is_clone_url and not args['keep_repo']:
-        rmtree(args['repo'])
+    if is_clone_url and not keep_repo:
+        rmtree(repo)
 
-    if not args['silence']:
+    if not silence:
+        #If i is replaced with groups_num, the number will be inaccurate when a single selectedgroup is audited
         print('Audit successfully completed for %d groups.' % i, file=sys.stderr)
     sys.stderr.flush()
 

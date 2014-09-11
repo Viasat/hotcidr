@@ -4,10 +4,9 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Create audit output')
 
-#Positional arguments
 parser.add_argument('repo', help='Input git directory, or git clone URL.')
 
-#Optional arguments
+parser.add_argument('--vpc-id', help='Optional vpc-id. If specified, the security group ids will be included in the audit.')
 parser.add_argument('--from-time', help='Include events from this timestamp until the specified to-date')
 parser.add_argument('--to-time', help='Include events up until this timestamp starting from the specified from-date')
 parser.add_argument('--output', help='Output audit at the absolute path. E.G. /home/user/output.txt.')
@@ -23,6 +22,7 @@ main(
     args['repo'],
     args['from_time'],
     args['to_time'],
+    args['vpc_id'],
     args['output'],
     args['output_webserver'],
     args['group'],
