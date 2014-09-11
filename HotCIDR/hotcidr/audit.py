@@ -211,13 +211,15 @@ def main(repo, from_time, to_time, vpc_id, output, output_webserver, selectedgro
             print('Warning: from-time argument is not an integer. It should be a timestamp in UTC. It will be set to the current time.', file=sys.stderr)
             to_time = int(math.floor(time.time()))
 
-    #TODO: Get illegal VPC changes
+    #Unauthorized rule database connection. This is not included in the current version of hotcidr for the command-line.
     '''
     try:
-        testDict = printSinceSpecifiedTime(to_time, from_time) 
+        #This function should return a dictionary {'added':[<unauthorized added rules>], 'deleted':[<unauthorized deleted rules>]} within the time range
+        testDict = get_unauth_rules(to_time, from_time) 
     except:
         print('Warning: MySQL database with unauthorized rules not found. Continuing without printing', file=sys.stderr)
     '''
+
     testDict = {}
     unauthAddedGroupsRules = {}
     unauthDeletedGroupsRules = {}
@@ -390,6 +392,7 @@ def main(repo, from_time, to_time, vpc_id, output, output_webserver, selectedgro
 
             approved_authdate = {} #For debugging, to make mistakes obvious
 
+        '''
         #Get unauthorized rules
         if group in unauthAddedGroupsRules:
             if not output_webserver and not sort_chronologically:
@@ -415,6 +418,7 @@ def main(repo, from_time, to_time, vpc_id, output, output_webserver, selectedgro
                     output_str += print_rule(formatted_rule, from_time, to_time, output_webserver)
                 else:
                     formatted_rules.append(formatted_rule)
+        '''
 
         #Sort formatted_rules chronologically
         if sort_chronologically:
