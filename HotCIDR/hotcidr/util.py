@@ -254,15 +254,19 @@ def get_git_commit(hexsha, git_dir, yamlfile):
         commit_message = git.Git( git_dir ).log('--ancestry-path', hexsha + '^..' + hexsha, '--format=\"%B\"').replace('\n', ' ')[1:-1].rstrip()
         return commit_message
 
+#Get the author and date of a commits approval. There are three cases:
+#1. The commit is the initial one - return its author and date
+#2. The commit is the child of a merge of two commits - return the merge author and date
+#3. The commit is not the initial one, and has no merge above it. Return its author and date
+#    This can happen if it has been changed directly in the repo, perhaps by an admin.
 def get_commit_approved_authdate(commit_hexsha, git_dir, yamlfile):
-    #If the commit is the initial git commit, return the initial commit author/date
+    #1. Check if the commit is the initial commit
     #This is needed since the next Git command run will check <commit_hexsha>^, the parent, which won't exist if the commit is the initial one.
     init_commit = get_init_commit(git_dir, yamlfile)
-
     if commit_hexsha == init_commit[2]:
         return {'author':init_commit[0], 'date':init_commit[1]}
 
-    #If not the initial commit, traverse the ancestry path
+    #If not the initial commit, traverse the ancestry path to look for either a merge or direct change
     next_commits = git.Git( git_dir ).log('--reverse', '--ancestry-path', commit_hexsha + '^..master', '--format="%an;%at;%P"').split('\n')
 
     #Remove quotes
@@ -270,42 +274,31 @@ def get_commit_approved_authdate(commit_hexsha, git_dir, yamlfile):
         next_commits[l] = next_commits[l][1:-1]
 
     if len(next_commits) > 0:
+        #2. Check if commit was merged
         if len(next_commits) > 1:
             next_commit = next_commits[1].rsplit(';',2)
-
-            #Check if branch is merged
             if len(next_commit) == 3:
-                auth = next_commit[0]
-                date = next_commit[1]
-                hexsha = next_commit[2]
+                auth,date,hexsha = next_commit
 
-                if len(hexsha.split(' ')) == 2:
+                #This is true when two hexshas are listed in the log, meaning a merger
+                if len(hexsha.split(' ')) == 2: 
+                    #This is true when the commit hexsha is one of the merged ones
                     if commit_hexsha == hexsha.split(' ')[0] or commit_hexsha == hexsha.split(' ')[1]:
-                        #Merged branch commit: return merge author, e.g. author of the child commit
+                        print(1,auth,datetime.datetime.fromtimestamp( float(date) ).strftime('%Y-%m-%d %H:%M:%S'),commit_hexsha)
                         return {'author':auth, 'date':date}
 
-            #Check if commit is a direct change to Git
-            else:
-                commit = next_commits[0].rsplit(';',2)
+        #3. Check if commit was directly changed, such that no merge exists
+        curr_ad = git.Git( git_dir ).log('--reverse', '--ancestry-path', commit_hexsha + '^..' + commit_hexsha, '--format="%an;%at"')
 
-                if len(commit) == 3:
-                    auth = commit[0]
-                    date = commit[1]
-
-                    #Commit is the most recent one in the master branch, which occurs during a direct change to the repo without a merge: approver is commit author
-                    return {'author':auth, 'date':date}
-
-        #Check if the branch is not a direct commit, but also not a merge
-        curr_ad = git.Git( git_dir ).log('--reverse', '--ancestry-path', commit_hexsha + '^..' + commit_hexsha, '--format="%an;%at"').rsplit(';',1)
+        #Strip quotes and seperate author and date
+        curr_ad = curr_ad[1:-1].rsplit(';',1)
         if len(curr_ad) == 2:
-            #Strip quotes
-            auth = curr_ad[0][1:]
-            date = curr_ad[1][:-1]
+            auth,date = curr_ad
 
-            #Commit is not a direct commit, nor a merge
+            print(2,auth,datetime.datetime.fromtimestamp( float(date) ).strftime('%Y-%m-%d %H:%M:%S'),commit_hexsha)
             return {'author':auth, 'date':date}
 
-    #No auth/date found, return n/a
+    #The commit does not exist in the repo, or something is horribly wrong in the repo or this code
     return {'author':'n/a', 'date':'n/a'}
 
 def get_added_deleted_rules( git_dir, yamlfile ):
