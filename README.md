@@ -98,6 +98,21 @@ Auditing can be done from the [auditing webapp](audit-webapp/README.md), or from
 
 The <repo> can be either a local git repository (a local directory) or a remote git repository (a git url, either https or ssh).
 
+### Expirations
+
+For testing or safety purposes, certain rules can be set to expire. For example, a rule allowing all inbound traffic with any port and protocol is probably meant for temporary testing, and can be tagged to expire after a reasonable time period.
+
+There are two ways to cause a rule to expire:
+
+1.  Add an 'expiration' field to any rule.
+
+```
+rules:
+- direction: inbound
+   protocol: all
+   location: 0.0.0.0/0
+   expiration: 86400
+```
 
 Authors
 -------
