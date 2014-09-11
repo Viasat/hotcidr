@@ -92,7 +92,7 @@ def format_rule(rule, repo, yamlfile, createdby, createdon, approvedby, approved
     elif not 'justification' in rule and commit_message:
         rule['justification'] = commit_message
     elif 'justification' in rule and commit_message:
-        rule['justification'] += ' (commit message: \"' + commit_message + '\")'
+        rule['justification'] += ' (commit message: \'' + commit_message + '\')'
    
     #Format ports_str
     if rule['protocol'] == 'icmp':
