@@ -2,7 +2,8 @@ from __future__ import print_function
 import os, sys, time
 import git
 import hotcidr.state
-from util import *
+from hotcidr import util
+from util import isint
 import yaml
 
 def main(repo = None, dont_push = None, silence = None):
@@ -64,10 +65,10 @@ def main(repo = None, dont_push = None, silence = None):
             if expirations:
                 for expired_rule in expirations:
                     if 'expiration' in expired_rule and isint(expired_rule['expiration']):
-                        #TODO: Check that these two fields are in util.rule_fields
+                        #TODO: Rather than count the fields in expired_rule, check that they are each in util.expected_rule_fields
                         if len(expired_rule.keys()) >= 2:
                             rule_is_expired = True
-                            for field in util.rule_fields:
+                            for field in util.expected_rule_fields:
                                 if not field in added_rule or not field in expired_rule:
                                     continue
 
