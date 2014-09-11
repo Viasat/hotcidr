@@ -55,10 +55,10 @@ See [README](audit-webapp/README.md)
 Fetch the VPC
 
 ```
-% hc-fetch <vpc-region-code> <output-directory> --aws-access-key-id AWS_ACCESS_KEY_ID --aws-secret-access-key AWS_SECRET_ACCESS_KEY
+% hc-fetch <vpc-region-code> <output-directory> AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
 
 e.g.
-% hc-fetch us-west-2 ./us-west-2-core --aws-access-key-id AWS_ACCESS_KEY_ID --aws-secret-access-key AWS_SECRET_ACCESS_KEY
+% hc-fetch us-west-2 ./us-west-2-core AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 
 ```
 
@@ -69,7 +69,7 @@ Setup as git repository
 fw_rules% git init
 fw_rules% git add .
 fw_rules% git commit -m "Initial commit"
-fw_rules% git remote add origin YOUR_REPO_URL
+fw_rules% git remote add origin <YOUR_REPO_URL>
 fw_rules% git push -u origin master
 ```
 
@@ -89,7 +89,9 @@ This script will maintain consistency between GitRepository and AWS while loggin
 Documentation Notes
 -------
 ### Apply
-Apply will not update security-groups that are not associated with an instance, nor rules that are incorrectly formatted.
+Apply takes a valid ruleset repository and applies the rules to the EC2 VPC.
+
+Apply will not work for rules that are incorrectly formatted.
 
 ### Audit
 Auditing can be done from the [auditing webapp](audit-webapp/README.md), or from the command line where HotCIDR is installed:
