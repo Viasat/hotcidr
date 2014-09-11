@@ -72,7 +72,7 @@ class TestExpiration(unittest.TestCase):
         self.assertEqual(len(yaml_post['rules']), 1)
 
         #Wait 4 total seconds for the rule to expire, then delete it
-        time_to_wait = 2*seconds_to_wait*3/2
+        time_to_wait = 2*seconds_to_wait*2 #Allow some buffer time for deleteexpire to run
         if time.time() - start_time < time_to_wait:
             sleeptime = time_to_wait - (time.time() - start_time)
         else:
@@ -128,7 +128,7 @@ class TestExpiration(unittest.TestCase):
         self.assertEqual(len(yaml_pre['rules']), 2)
 
         #Wait 2 total seconds for the rule to expire, then delete it
-        time_to_wait = seconds_to_wait*3/2
+        time_to_wait = seconds_to_wait*3/2 #Allow some buffer time for deleteexpire to run
         if time.time() - start_time < time_to_wait:
             sleeptime = time_to_wait - (time.time() - start_time)
         else:
@@ -143,7 +143,7 @@ class TestExpiration(unittest.TestCase):
         self.assertEqual(len(yaml_post['rules']), 1)
 
         #Wait 4 total seconds for last rule to expire, then delete it
-        time_to_wait = 2*seconds_to_wait*3/2
+        time_to_wait = 2*seconds_to_wait*2 #Allow some buffer time for deleteexpire to run
         if time.time() - start_time < time_to_wait:
             sleeptime = time_to_wait - (time.time() - start_time)
         else:
@@ -155,6 +155,7 @@ class TestExpiration(unittest.TestCase):
         test_file = open(test_file_path, 'r')
         yaml_none = yaml.load(test_file)
         test_file.close()
+        print(test_file_path)
         self.assertEqual(len(yaml_none['rules']), 0)
 
         #Clean up temp directory
