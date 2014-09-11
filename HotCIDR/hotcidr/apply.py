@@ -203,6 +203,7 @@ def changes(actions, unauthorized=0):
 def main(git_repo, region_code, vpc_id, aws_key, aws_secret, dry_run, expected_repo=None):
     with fetch.vpc(region_code, vpc_id, aws_key, aws_secret) as aws_dir,\
          util.repo(git_repo) as git_dir:
+        unauthorized_actions = []
         if expected_repo:
             try:
                 with util.repo(git_repo, sha1=expected_repo) as exp_dir:
