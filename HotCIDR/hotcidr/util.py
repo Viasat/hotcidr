@@ -4,7 +4,6 @@ from hotcidr import state
 import boto.ec2
 import boto.vpc
 import contextlib
-import datetime
 import git
 import hashlib
 import json
@@ -284,7 +283,6 @@ def get_commit_approved_authdate(commit_hexsha, git_dir, yamlfile):
                 if len(hexsha.split(' ')) == 2: 
                     #This is true when the commit hexsha is one of the merged ones
                     if commit_hexsha == hexsha.split(' ')[0] or commit_hexsha == hexsha.split(' ')[1]:
-                        print(1,auth,datetime.datetime.fromtimestamp( float(date) ).strftime('%Y-%m-%d %H:%M:%S'),commit_hexsha)
                         return {'author':auth, 'date':date}
 
         #3. Check if commit was directly changed, such that no merge exists
@@ -294,8 +292,6 @@ def get_commit_approved_authdate(commit_hexsha, git_dir, yamlfile):
         curr_ad = curr_ad[1:-1].rsplit(';',1)
         if len(curr_ad) == 2:
             auth,date = curr_ad
-
-            print(2,auth,datetime.datetime.fromtimestamp( float(date) ).strftime('%Y-%m-%d %H:%M:%S'),commit_hexsha)
             return {'author':auth, 'date':date}
 
     #The commit does not exist in the repo, or something is horribly wrong in the repo or this code
