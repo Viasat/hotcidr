@@ -4,6 +4,7 @@ from hotcidr import state
 import boto.ec2
 import boto.vpc
 import contextlib
+import datetime
 import git
 import hashlib
 import json
@@ -267,12 +268,12 @@ def get_commit_approved_authdate(commit_hexsha, git_dir, yamlfile):
     #Remove quotes
     for l in range(0,len(next_commits)):
         next_commits[l] = next_commits[l][1:-1]
-    
+
     if len(next_commits) > 0:
         if len(next_commits) > 1:
             next_commit = next_commits[1].rsplit(';',2)
 
-            #Merged branch, get merge author, e.g. author of the child commit
+            #Check if branch is merged
             if len(next_commit) == 3:
                 auth = next_commit[0]
                 date = next_commit[1]
@@ -280,23 +281,28 @@ def get_commit_approved_authdate(commit_hexsha, git_dir, yamlfile):
 
                 if len(hexsha.split(' ')) == 2:
                     if commit_hexsha == hexsha.split(' ')[0] or commit_hexsha == hexsha.split(' ')[1]:
+                        #Merged branch commit: return merge author, e.g. author of the child commit
                         return {'author':auth, 'date':date}
 
-            #Commit is the most recent one in the master branch, which occurs during a direct change to the repo without a merge: approver is commit author
+            #Check if commit is a direct change to Git
             else:
                 commit = next_commits[0].rsplit(';',2)
 
                 if len(commit) == 3:
                     auth = commit[0]
                     date = commit[1]
+
+                    #Commit is the most recent one in the master branch, which occurs during a direct change to the repo without a merge: approver is commit author
                     return {'author':auth, 'date':date}
 
-        #Branch not merged, get author of commit_hexsha
-        this_commit = next_commits[0].rsplit(';',2)
+        #Check if the branch is not a direct commit, but also not a merge
+        curr_ad = git.Git( git_dir ).log('--reverse', '--ancestry-path', commit_hexsha + '^..' + commit_hexsha, '--format="%an;%at"').rsplit(';',1)
+        if len(curr_ad) == 2:
+            #Strip quotes
+            auth = curr_ad[0][1:]
+            date = curr_ad[1][:-1]
 
-        if len(this_commit) == 3:
-            auth = this_commit[0]
-            date = this_commit[1]
+            #Commit is not a direct commit, nor a merge
             return {'author':auth, 'date':date}
 
     #No auth/date found, return n/a
