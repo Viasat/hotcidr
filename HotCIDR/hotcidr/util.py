@@ -406,8 +406,10 @@ def get_added_deleted_rules( git_dir, yamlfile ):
     return added_deleted_rules
 
 @contextlib.contextmanager
-def repo(repo):
+def repo(repo, sha1=None):
     git_dir, is_clone_url = get_valid_repo(repo)
+    if sha1:
+        git.Git(git_dir).checkout(sha1)
     yield git_dir
     if is_clone_url:
         shutil.rmtree(git_dir)
@@ -439,3 +441,6 @@ def get_connection(vpc_id, region, **k):
 def get_id_for_group(conn, sgname):
     for sg in conn.get_all_security_groups(filters={'group-name': sgname}):
         return sg.id
+
+def get_hexsha(repo):
+    return git.Repo(repo).heads.master.commit.hexsha

@@ -74,14 +74,15 @@ class ModifyRule(Action):
             'to_port': toport
         }
         if util.is_cidr(loc):
-            k['cidr_ip'] = loc
+            f(cidr_ip=loc, **k)
         else:
             #Boto uses src_group_id or src_security_group_group_id to mean the
             #same thing depending on which function f is used here.
-            k['src_group_id'] = loc
-            k['src_security_group_group_id'] = loc
-
-        f(**k)
+            loc = util.get_id_for_group(conn, loc)
+            try:
+                f(src_group_id=loc, **k)
+            except TypeError:
+                f(src_security_group_group_id=loc, **k)
 
 class RemoveRule(ModifyRule):
     def run(self, conn):
@@ -125,49 +126,49 @@ def rules(group):
                 r.setdefault(attr, None)
             yield Rule(**r)
 
-def get_actions(git_dir, aws_dir):
-    aws_instances = util.load_boxes(aws_dir)
-    aws_groups = util.load_groups(aws_dir)
+def get_actions(old_dir, new_dir):
+    old_instances = util.load_boxes(old_dir)
+    old_groups = util.load_groups(old_dir)
 
-    git_instances = util.load_boxes(git_dir)
-    git_groups = util.load_groups(git_dir)
+    new_instances = util.load_boxes(new_dir)
+    new_groups = util.load_groups(new_dir)
 
     # Add missing groups to AWS
-    for g in git_groups:
-        if g not in aws_groups:
-            if 'description' in git_groups[g]:
-                desc = git_groups[g]['description']
+    for g in new_groups:
+        if g not in old_groups:
+            if 'description' in new_groups[g]:
+                desc = new_groups[g]['description']
             else:
                 desc = "Automatically created by HotCIDR"
             yield CreateSecurityGroup(g, desc)
 
     # Update associated security groups for instances
-    for aws_id, aws_inst in aws_instances.items():
-        if aws_id in git_instances and 'groups' in git_instances[aws_id]:
-            groups = git_instances[aws_id]['groups']
-            if set(groups) != set(aws_inst['groups']):
-                yield ModifyInstanceAttribute(aws_id, 'groupSet', groups)
+    for old_id, old_inst in old_instances.items():
+        if old_id in new_instances and 'groups' in new_instances[old_id]:
+            groups = new_instances[old_id]['groups']
+            if set(groups) != set(old_inst['groups']):
+                yield ModifyInstanceAttribute(old_id, 'groupSet', groups)
         else:
-            print("Skipping instance %s (Does not exist in AWS)" % aws_id)
+            print("Skipping instance %s (Does not exist in AWS)" % old_id)
 
     #TODO: Delete security groups that are unused
 
     # Update rules for each security group
-    for g, git_group in git_groups.items():
-        git_rules = set(rules(git_group))
+    for g, new_group in new_groups.items():
+        new_rules = set(rules(new_group))
 
-        if g in aws_groups:
-            aws_rules = set(rules(aws_groups[g]))
+        if g in old_groups:
+            old_rules = set(rules(old_groups[g]))
         else:
-            aws_rules = set()
+            old_rules = set()
 
-        if git_rules != aws_rules:
-            for rule in aws_rules - git_rules:
+        if new_rules != old_rules:
+            for rule in old_rules - new_rules:
                 yield RemoveRule(g, rule)
-            for rule in git_rules - aws_rules:
+            for rule in new_rules - old_rules:
                 yield AddRule(g, rule)
 
-def changes(actions):
+def changes(actions, unauthorized=0):
     objs = dict(zip([
         (CreateSecurityGroup, "%d group(s) created"),
         (ModifyInstanceAttribute, "%d instance(s) updated"),
@@ -189,14 +190,30 @@ def changes(actions):
             else:
                 r.append(x + "s" + y)
 
+    if unauthorized:
+        if unauthorized == 1:
+            r.append("1 unauthorized change found")
+        else:
+            r.append("%d unauthorized changes found" % unauthorized)
+
     if not r:
         return "No changes"
     return ", ".join(r)
 
-def main(git_repo, region_code, vpc_id, aws_key, aws_secret, dry_run):
+def main(git_repo, region_code, vpc_id, aws_key, aws_secret, dry_run, expected_repo=None):
     with fetch.vpc(region_code, vpc_id, aws_key, aws_secret) as aws_dir,\
          util.repo(git_repo) as git_dir:
-        actions = list(get_actions(git_dir, aws_dir))
+        if expected_repo:
+            try:
+                with util.repo(git_repo, sha1=expected_repo) as exp_dir:
+                    unauthorized_actions = list(get_actions(exp_dir, aws_dir))
+                    for action in unauthorized_actions:
+                        print("Unauthorized action: %s" % action)
+            except git.exc.GitCommandError:
+                print("Could not check for unauthorized changes.")
+                print("Have you recently changed git repositories?")
+
+        actions = list(get_actions(aws_dir, git_dir))
 
         conn = util.get_connection(vpc_id, region_code,
                 aws_access_key_id=aws_key, aws_secret_access_key=aws_secret)
@@ -211,4 +228,5 @@ def main(git_repo, region_code, vpc_id, aws_key, aws_secret, dry_run):
             if not dry_run:
                 action(conn)
 
-        print(changes(actions))
+        print("hc-apply complete against %s" % util.get_hexsha(git_dir))
+        print(changes(actions, unauthorized=len(unauthorized_actions)))
