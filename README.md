@@ -91,12 +91,14 @@ Documentation Notes
 ### Apply
 Apply will not update security-groups that are not associated with an instance, nor rules that are incorrectly formatted.
 
-### Audit Webapp
+### Audit
 Auditing can be done from the [auditing webapp](audit-webapp/README.md), or from the command line where HotCIDR is installed:
 
     hc-audit <repo>
 
 The <repo> can be either a local git repository (a local directory) or a remote git repository (a git url, either https or ssh).
+
+Note that in the dashboard, unauthorized rules will be printed, which is not true for the command line. This is because the dashboard automatically configures the MySQL database necessary for unauthorized rules. The code is commented out in the apply script, if this functionality is added in the future.
 
 ### Expirations
 
