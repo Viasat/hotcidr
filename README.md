@@ -112,12 +112,13 @@ There are two ways to cause a rule to expire:
 Here is an example of the first kind of expiration.
 
 ```
-  security_group_1.yaml
-  rules:
-  - direction: inbound
-    protocol: all
-    location: 0.0.0.0/0
-    expiration: 86400
+security_group_1.yaml
+---
+rules:
+- direction: inbound
+  protocol: all
+  location: 0.0.0.0/0
+  expiration: 86400
 ```
 
 This will cause this single, specific rule to be removed 1 day after it was committed.
@@ -126,6 +127,7 @@ Here is an example of the second kind of expiration.
 
 ```
 expirations.yaml
+---
 rules:
 - direction: inbound
   protocol: all
@@ -133,18 +135,19 @@ rules:
   expiration: 86400 
 ```
 
-This example will cause any rule in the entire repository to be removed 1 day after it was committed.
+This example will cause any rule in the entire repository matching the direction, protocol and location fields to be removed 1 day after it was committed.
 
 **Be careful with this**, as writing something such as
 
 ```
 expirations.yaml
+---
 rules:
 - ports: 443
   expiration: 1
 ```
 
-Will cause every rule with 'ports: 443' to be deleted instantly. 
+Will cause every rule in the entire repo with 'ports: 443' to be deleted instantly. 
 
 
 Authors
