@@ -102,23 +102,27 @@ The <repo> can be either a local git repository (a local directory) or a remote 
 
 For testing or safety purposes, certain rules can be set to expire. For example, a rule allowing all inbound traffic with any port and protocol is probably meant for temporary testing, and can be tagged to expire after a reasonable time period.
 
+The script hc-deleteexpired must be run periodically on the desired repo. It will look for rule expirations, and then commit and push changes to the repo automatically. Because rule expiration is automatic and can delete things from the repo, **exercise caution**.
+
 There are two ways to cause a rule to expire:
 
-
 1. Add an 'expiration' field to any rule in a group's yaml file.
-
-```
-security_group_1.yaml
-rules:
-- direction: inbound
-  protocol: all
-  location: 0.0.0.0/0
-  expiration: 86400
-```
-
-  This example will cause this single, specific rule to be removed 1 day after it was committed.
-
 2. Add matching rule fields into expirations.yaml as criteria for expirations
+
+Here is an example of the first kind of expiration.
+
+```
+  security_group_1.yaml
+  rules:
+  - direction: inbound
+    protocol: all
+    location: 0.0.0.0/0
+    expiration: 86400
+```
+
+This will cause this single, specific rule to be removed 1 day after it was committed.
+
+Here is an example of the second kind of expiration.
 
 ```
 expirations.yaml
@@ -129,7 +133,9 @@ rules:
   expiration: 86400 
 ```
 
-  This example will cause any rule in the entire repository to be removed 1 day after it was committed. **Be careful with this**, as writing something such as
+This example will cause any rule in the entire repository to be removed 1 day after it was committed.
+
+**Be careful with this**, as writing something such as
 
 ```
 expirations.yaml
@@ -138,7 +144,8 @@ rules:
   expiration: 1
 ```
 
-  Will cause every rule with 'ports: 443' to be deleted instantly. 
+Will cause every rule with 'ports: 443' to be deleted instantly. 
+
 
 Authors
 -------
