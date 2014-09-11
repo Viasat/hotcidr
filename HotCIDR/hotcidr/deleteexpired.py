@@ -28,7 +28,11 @@ def main(repo = None, dont_push = None, silence = None):
         print('expirations.yaml is necessary for expiration checking.', file=sys.stderr)
         return 1
 
-    expirations = util.get_added_deleted_rules(args['repo'],'expirations.yaml')['added']
+    if expirations:
+        if 'rules' in expirations:
+            expirations = expirations['rules']
+        else:
+            print('Error: expirations.yaml is not properly formatted. Rules must be under a \'rules:\' tag.', file=sys.stderr)
 
     #Immediately terminate if there are no groups, or else a division by 0 will occur later
     groups_num = len(groups)
@@ -76,8 +80,9 @@ def main(repo = None, dont_push = None, silence = None):
                                     rule_is_expired = False
                                     break
 
+                            #Give the rule an expiration, so it will be seen as if it was originally added in <group>.yaml
                             if rule_is_expired:
-                                added_rule['expiration'] = expired_rule['expiration'] - (int(added_rule['date']) - int(expired_rule['date']))
+                                added_rule['expiration'] = int(expired_rule['expiration'])
                         else:
                             print('Warning: rule in expirations.yaml has no fields to match: ' + expired_rule)
                     else:
