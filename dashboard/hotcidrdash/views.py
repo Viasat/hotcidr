@@ -184,6 +184,7 @@ def apply(slug):
     # TODO: Add authentication to this endpoint
     conf = db.Configuration.query.filter_by(slug=slug).first_or_404()
     jobs.run_apply(conf, "Automatic hc-apply")
+    return "Success"
 
 @app.route('/config/<slug>/apply_out/<job_id>')
 @login_required
