@@ -47,8 +47,8 @@ HotCIDR% python setup.py install
 - Customize provided validate script for running the job
 
 
-### Audit Webapp
-See [README](audit-webapp/README.md)
+### Dashboard
+See [README](dashboard/README.md)
 
 
 ### Repository setup
