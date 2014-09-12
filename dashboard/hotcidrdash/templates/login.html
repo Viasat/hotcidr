@@ -1,0 +1,32 @@
+{% extends 'layout_base.html' %}
+{% block title %}Login{% endblock %}
+{% block subtitle %}Login{% endblock %}
+{% block body %}
+<div class="row">
+  <div class="col-md-3"></div>
+  <div class="col-md-6">
+    {% for category, message in get_flashed_messages(True) %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </div>
+  <div class="col-md-3"></div>
+</div>
+<div class="row">
+  <div class="col-md-3"></div>
+  <div class="col-md-6">
+    <form method="POST">
+      {% if form.username.data %}
+        {{ form.username }}
+        {{ form.password(autofocus=true) }}
+      {% else %}
+        {{ form.username(autofocus=true) }}
+        {{ form.password }}
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+  </div>
+  <div class="col-md-3"></div>
+</div>
+{% endblock %}

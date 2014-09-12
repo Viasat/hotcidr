@@ -1,0 +1,16 @@
+#actions button, #actions a {
+  margin: 15px 3px;
+}
+
+#actions button span.glyphicon, #actions a span.glyphicon {
+  font-size: 2em;
+}
+
+#job-summary p {
+  padding: 10px;
+}
+
+pre {
+  background-color: transparent!important;
+  border: none!important;
+}

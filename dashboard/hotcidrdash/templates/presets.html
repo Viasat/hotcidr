@@ -1,0 +1,15 @@
+{% extends 'layout_main.html' %}
+{% set active_page = 'presets' %}
+{% block title %}Presets{% endblock %}
+{% block subtitle %}Presets{% endblock %}
+{% block content %}
+<h3>AWS</h3>
+{% for slug, disp in aws %}
+<a href="{{ url_for('view_aws', slug=slug) }}">{{ disp }}</a><br>
+{% endfor %}
+
+<h3>GitHub</h3>
+{% for slug, disp in git %}
+<a href="{{ url_for('view_git', slug=slug) }}">{{ disp }}</a><br>
+{% endfor %}
+{% endblock %}

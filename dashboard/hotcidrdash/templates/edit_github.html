@@ -1,0 +1,21 @@
+{% extends 'layout_main.html' %}
+{% block title %}GitHub {{ disp }}{% endblock %}
+{% block subtitle %}GitHub: {{ disp }}{% endblock %}
+{% block content %}
+<form method="POST">
+  <div class="well">
+    {{ form.hidden_tag() }}
+
+    {{ form.disp }}
+
+    {{ form.url }}
+
+    {{ form.token }}
+  </div>
+
+  <div class="form-group">
+    <button type="submit" class="btn btn-primary" name="action" value="save">Save</button>
+    <button type="submit" class="btn btn-danger" name="action" value="delete">Delete</button>
+  </div>
+</form>
+{% endblock %}

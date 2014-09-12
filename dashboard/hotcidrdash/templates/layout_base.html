@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HotCIDR - {% block title %}{% endblock %}</title>
+{% assets 'css/index.css', 'css/bootstrap.min.css', output='gen/packed.css' %}
+<link href="{{ ASSET_URL }}" rel="stylesheet">
+{% endassets %}
+{% assets 'js/jquery-1.11.1.min.js', 'js/bootstrap.min.js', output='gen/packed.js' %}
+<script type="text/javascript" src="{{ ASSET_URL }}"></script>
+{% endassets %}
+{% block adds %}{% endblock %}
+</head>
+<body>
+<div class="container">
+  <div class="page-header">
+    <div class="navbar-text navbar-right">
+      {% if user %}
+        {% if user.username %}
+          {{ user.username }} | <a href="{{ url_for('logout') }}">Sign Out</a>
+        {% else %}
+          <a href="{{ url_for('login') }}">Sign In</a>
+        {% endif %}
+      {% endif %}
+    </div>
+    <h1>HotCIDR <small>{% block subtitle %}{% endblock %}</small></h1>
+  </div>
+</div>
+<div class="container">{% block body %}{% endblock %}</div>
+</body>
+</html>
