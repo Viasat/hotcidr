@@ -216,7 +216,7 @@ def validate_ports(self):
 def validate_rule_fields(self):
     for group_name, group in has_rules(self.groups.iteritems()):
         for rule_num, rule in enumerate(group['rules'], 1):
-            for field in ('description', 'justification'):
+            for field in ('description',):
                 if field not in rule:
                     self.warn("Rule %d in %s is missing %s" %
                         (rule_num, group_name, inflect_a(field)))
@@ -224,7 +224,7 @@ def validate_rule_fields(self):
 @requires(load_groups)
 def validate_group_fields(self):
     for group_name, group in self.groups.iteritems():
-        for field in ('description', 'id', 'rules'):
+        for field in ('description', 'rules'):
             if field not in group:
                 self.warn("%s is missing %s" % (group_name, inflect_a(field)))
 
@@ -238,11 +238,11 @@ def validate_instance_fields(self):
 
 @requires(load_groups)
 def validate_locations(self):
-    group_ids = set(i['id'] for i in self.groups.values() if 'id' in i)
+    valid_groups = set(self.groups.keys())
     for group_name, group in has_rules(self.groups.iteritems()):
         for rule_num, rule in enumerate(group['rules'], 1):
             if 'location' in rule:
-                if rule['location'] not in group_ids:
+                if rule['location'] not in valid_groups:
                     try:
                         ip = netaddr.IPNetwork(rule['location'])
                         if str(ip.cidr) != rule['location']:
