@@ -1,6 +1,7 @@
 from __future__ import print_function
 import datetime
 import math
+import boto.ec2
 
 import hotcidr.state
 from hotcidr.modifydatabase import printSinceSpecifiedTime
@@ -185,7 +186,7 @@ def print_rule(rule, from_time, to_time, output_webserver):
 
     return output
 
-def main(repo, from_time, to_time, vpc_id, output, output_webserver, selectedgroup, sort_chronologically, silence):
+def main(repo, from_time, to_time, region_code, vpc_id, aws_id, aws_key, output, output_webserver, selectedgroup, sort_chronologically, silence):
     #Check repo argument
     repo, is_clone_url = get_valid_repo( repo )
     if not repo:
@@ -218,13 +219,7 @@ def main(repo, from_time, to_time, vpc_id, output, output_webserver, selectedgro
         testDict = get_unauth_rules(to_time, from_time) 
     except:
         print('Warning: MySQL database with unauthorized rules not found. Continuing without printing', file=sys.stderr)
-    '''
 
-    testDict = {}
-    unauthAddedGroupsRules = {}
-    unauthDeletedGroupsRules = {}
-
-    '''
     if 'addedDict' in testDict:
         unauthAddedGroupsRules = testDict['addedDict']
     if 'deletedDict' in testDict:
@@ -237,7 +232,7 @@ def main(repo, from_time, to_time, vpc_id, output, output_webserver, selectedgro
     if output_webserver:
         output_str += '---\n'
 
-    #Get dict: key:groups, value:associated boxes' cidr ip
+    #Handle boxes.yaml
     boxgroups = {}
     try:
         boxesyaml = file( os.path.join(repo, 'boxes.yaml') , 'r')
@@ -267,6 +262,43 @@ def main(repo, from_time, to_time, vpc_id, output, output_webserver, selectedgro
                 #Print local machines with no ip-address
                 elif 'tags' in boxes[box] and 'Name' in boxes[box]['tags'] and boxes[box]['tags']['Name']:
                     boxgroups[boxgroup].append( boxes[box]['tags']['Name'] )
+
+    #Handle getting the security group ids to print out in auditing
+    #Get connection from credentials, or else the boto configuration
+    connection = None
+    if region_code:
+        try:
+            if not aws_id or not aws_key:
+                connection = boto.ec2.connect_to_region(region_code)
+            else:
+                connection = boto.ec2.connect_to_region(region_code, aws_access_key_id=aws_id, aws_secret_access_key=aws_key)
+        except boto.exception.NoAuthHandlerFound:
+            print('Warning: boto credentials and/or region-code are invalid or missing. The audit will not include security group ids.')
+            return 1
+    else:
+        print('Warning: region-code argument required for printing security group ids in audit. The audit will not include security group ids.')
+
+    #If vpc_id specified, filter on it. Otherwise, return all security groups
+    groups = None
+    if connection:
+        if vpc_id:
+            groups = connection.get_all_security_groups(filters={'vpc-id':vpc_id})
+        else:
+            groups = connection.get_all_security_groups()
+
+    #Create a lookup of name given id for each group, to speed up printing later
+    nameid_lookup = dict()
+    if groups:
+        for group in groups:
+            #For a single selected group, don't do anything with other non-selected groups
+            if selectedgroup and not group.name == selectedgroup:
+                continue
+
+            if group.name in nameid_lookup:
+                print('Warning: vpc-id has not been specified, and there are two vpcs with the group ' + group.name + '. The audit will not include security group ids.')
+                break
+
+            nameid_lookup[group.name.encode('ascii')] = group.id.encode('ascii')
 
     #Get groups and print auditing info per group OR print audit info for specified file
     if selectedgroup:
@@ -314,9 +346,12 @@ def main(repo, from_time, to_time, vpc_id, output, output_webserver, selectedgro
             print('Skipping group; it will not be included in the audit output', file=sys.stderr)
             continue
 
-        #Print group name
-        #TODO: Append get_sgid to the beginning of this. Requires connection, which requires args for aws access keys
-        output_str += groups[group].split('/')[1].split('.')[0] + '\n'
+        #Print group name, possibly with security group id
+        group_name = groups[group].split('/')[1].split('.')[0]
+        if group_name in nameid_lookup:
+            output_str += nameid_lookup[group_name] + ',' + group_name  + '\n'
+        else:
+            output_str += group_name  + '\n'
 
         #Print associated machines
         output_str += 'Machines:\n'

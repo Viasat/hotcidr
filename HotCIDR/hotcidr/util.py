@@ -53,17 +53,6 @@ expected_rule_fields = ['direction','protocol','location']
 def load_boxes(d):
     return state.load(open(os.path.join(d, 'boxes.yaml')))
 
-#Get the security group id(s) based on a security group name
-def get_sgid(conn, sgname, vpc_id):
-    ids = list()
-    for sg in conn.get_all_security_groups(filters={'group-name':sgname, 'vpc-id':vpc_id}):
-        ids.append(sg.id)
-    return ids
-
-#Get the security group id(s) based on a security group name
-def get_sgname(conn, sgid, vpc_id):
-    return conn.get_all_security_groups(filters={'group-id':sgid, 'vpc-id':vpc_id})[0].name
-
 #Load groups
 def load_groups(d, ext='.yaml'):
     groups_dir = os.path.join(d, 'groups')

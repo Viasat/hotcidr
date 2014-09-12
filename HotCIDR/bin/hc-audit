@@ -6,9 +6,15 @@ parser = argparse.ArgumentParser(description='Create audit output')
 
 parser.add_argument('repo', help='Input git directory, or git clone URL.')
 
-parser.add_argument('--vpc-id', help='Optional vpc-id. If specified, the security group ids will be included in the audit.')
 parser.add_argument('--from-time', help='Include events from this timestamp until the specified to-date')
 parser.add_argument('--to-time', help='Include events up until this timestamp starting from the specified from-date')
+
+#The following arguments are optional, and must all be included for the sg-ids to print out in the audit
+parser.add_argument('--region-code', help='Optional vpc-id. If specified, the security group ids will be included in the audit.')
+parser.add_argument('--vpc-id', help='Optional vpc-id. If specified, the security group ids will be included in the audit.')
+parser.add_argument('--aws-access-key_id', help="Optional AWS Access Key Id. If specified, the security group ids will be included in the audit.")
+parser.add_argument('--aws-secret-access_key', help="Optional AWS Secret Access Key. If specified, the security group ids will be included in the audit.")
+
 parser.add_argument('--output', help='Output audit at the absolute path. E.G. /home/user/output.txt.')
 parser.add_argument('--output-webserver', help='Format output for the webserver, in CSV format', action='store_true')
 parser.add_argument('--group', help='Audit only the specified group')
@@ -21,7 +27,12 @@ main(
     args['repo'],
     args['from_time'],
     args['to_time'],
+
+    args['region_code'],
     args['vpc_id'],
+    args['aws_access_key_id'],
+    args['aws_secret_access_key'],
+
     args['output'],
     args['output_webserver'],
     args['group'],

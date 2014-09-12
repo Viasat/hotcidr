@@ -80,6 +80,7 @@ def main(region_code, vpc_id, output = '', access_id = None, access_key = None, 
         print('Please remove the directory ' + groupsdir + ' before continuing')
         return 1
 
+    #Get connection from credentials, or else the boto configuration
     try:
         if not args['access_id'] or not args['access_key']:
             connection = boto.ec2.connect_to_region(region_code)
