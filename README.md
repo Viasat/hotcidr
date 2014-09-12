@@ -73,19 +73,6 @@ fw_rules% git remote add origin <YOUR_REPO_URL>
 fw_rules% git push -u origin master
 ```
 
-
-### Automatic rule application (TODO)
-Setup cronjob for hc-apply to run in background (script runs on interval in background)
-
-1. Run `crontab -e` in unix shell to open up cronjob config file
-   
-2. Add following line to end of cronjob config file (15 signifies script will run every 15 minutes)
-   
-    SHELL=/bin/bash
-    */15 * * * * cd ~/hotcidr/HotCIDR/bin/; hc-apply GITURL >> ~/hotcidr/HotCIDR/applyLog/log\_apply
-
-This script will maintain consistency between GitRepository and AWS while logging output in "applyLog".
-
 Documentation Notes
 -------
 ### Apply
