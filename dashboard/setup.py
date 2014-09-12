@@ -17,5 +17,8 @@ setup(
         "humanize >= 0.5",
         "redis >= 2.9.1",
         "requests >= 2.3.0",
+        "python-crontab >= 1.8.1",
+        "croniter >= 0.3.5",
+        "python-ldap >= 2.4.16",
     ],
 )

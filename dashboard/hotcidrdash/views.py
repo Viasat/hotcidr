@@ -180,7 +180,6 @@ def view_config(slug):
                                                webpage_url=webpage_url)
 
 @app.route('/config/<slug>/apply', methods=['GET'])
-@login_required
 def apply(slug):
     # TODO: Add authentication to this endpoint
     conf = db.Configuration.query.filter_by(slug=slug).first_or_404()
