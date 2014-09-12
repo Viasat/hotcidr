@@ -1,0 +1,4 @@
+*.pyc
+cp.db
+dashboard/static/.webassets-cache
+.DS_Store
