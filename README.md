@@ -87,6 +87,8 @@ Auditing can be done from the [dashboard](dashboard), or from the command line w
 
 The <repo> can be either a local git repository (a local directory) or a remote git repository (a git url, either https or ssh).
 
+If no date range is specified, the audit will include every rule change since the beginning of the repo. Specifying a date range will limit the audit to rules that have been created (that is, proposed) within the date range. Note that the rule is actually implemented during apply, which only occurs after the rule is approved, not proposed.
+
 The security group ids for each group will be added in if four arguments are present or can be obtained automatically: aws-access-key-id & aws-secret-access-key (if not present, will be obtained from boto configuration, e.g. ~/.boto), the vpc-id (which is not necessary if no conflicting security group names exist, e.g. there is only one vpc), and the region-code (always necessary, although in future versions, it can be obtained from the vpc-id if present).
 
 Note that in the dashboard, unauthorized rules will be printed, which is not true for the command line. This is because the dashboard automatically configures the MySQL database necessary for unauthorized rules. The code is commented out in the apply script, if this functionality is added in the future.
