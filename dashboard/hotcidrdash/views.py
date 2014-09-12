@@ -21,9 +21,16 @@ def login_required(f):
     def decorator(*a, **b):
         if 'user_id' not in flask.session:
             return flask.redirect(flask.url_for('login'))
+        if 'maintenance' in flask.session:
+            return flask.redirect(flask.url_for('maintenance'))
         return f(*a, **b)
     decorator.__name__ = f.__name__
     return decorator
+
+@app.route('/maintenance')
+def maintenance():
+    flask.session['maintenance'] = True
+    return flask.render_template('maintenance.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
