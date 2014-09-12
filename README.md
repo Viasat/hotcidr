@@ -81,7 +81,7 @@ Apply takes a valid ruleset repository and applies the rules to the EC2 VPC.
 Apply will not work for rules that are incorrectly formatted.
 
 ### Audit
-Auditing can be done from the [dashboard](dashboard/README.md), or from the command line where HotCIDR is installed:
+Auditing can be done from the [dashboard](dashboard), or from the command line where HotCIDR is installed:
 
     hc-audit <repo>
 
