@@ -49,12 +49,6 @@ def append_to_rules(connection, rules, group, rule, grant, inout_str, nameid_loo
 
 def main(region_code, vpc_id, output = '', access_id = None, access_key = None, silence = None):
 
-    args = {}
-    args['output'] = output
-    args['silence'] = silence
-    args['access_id'] = access_id
-    args['access_key'] = access_key
-
     #Check argument validity
     if not util.is_valid_vpc(region_code):
         print('Error: invalid vpc-region-code.', file=sys.stderr)
@@ -63,7 +57,7 @@ def main(region_code, vpc_id, output = '', access_id = None, access_key = None, 
     yaml.add_representer(dict, yaml.representer.SafeRepresenter.represent_dict)
 
     #Setup directory structure
-    outdir = args['output']
+    outdir = output
     relgroupsdir = 'groups'
     groupsdir = os.path.join(outdir, relgroupsdir)
     try:
@@ -82,10 +76,10 @@ def main(region_code, vpc_id, output = '', access_id = None, access_key = None, 
 
     #Get connection from credentials, or else the boto configuration
     try:
-        if not args['access_id'] or not args['access_key']:
+        if not access_id or not access_key:
             connection = boto.ec2.connect_to_region(region_code)
         else:
-            connection = boto.ec2.connect_to_region(region_code, aws_access_key_id=args['access_id'], aws_secret_access_key=args['access_key'])
+            connection = boto.ec2.connect_to_region(region_code, aws_access_key_id=access_id, aws_secret_access_key=access_key)
     except boto.exception.NoAuthHandlerFound:
         print('Error: boto credentials are invalid. Check your configuration.')
         return 1
@@ -106,7 +100,7 @@ def main(region_code, vpc_id, output = '', access_id = None, access_key = None, 
         fn = os.path.join(outdir, relgroupsdir, '%s.yaml' % str(group.name))
 
         if os.path.exists(fn):
-            if not args['silence']:
+            if not silence:
                 duplicated_str = ' and merging duplicated'
 
             rules = state.load(open(fn))['rules']
@@ -114,7 +108,7 @@ def main(region_code, vpc_id, output = '', access_id = None, access_key = None, 
             rules = []
             duplicated_str = ''
 
-        if not args['silence']:
+        if not silence:
             print('Forming%s group %s' % (duplicated_str, str(group.name)))
 
         data = {
@@ -140,7 +134,7 @@ def main(region_code, vpc_id, output = '', access_id = None, access_key = None, 
 
     instancesDict = dict()
     for instance in instances:
-        if not args['silence']:
+        if not silence:
             print('Found instance %s' % instance)
 
         k = instance.id.encode('utf-8')
