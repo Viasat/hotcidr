@@ -100,6 +100,8 @@ Auditing can be done from the [auditing webapp](audit-webapp/README.md), or from
 
 The <repo> can be either a local git repository (a local directory) or a remote git repository (a git url, either https or ssh).
 
+The security group ids for each group will be added in if four arguments are present or can be obtained automatically: aws-access-key-id & aws-secret-access-key (if not present, will be obtained from boto configuration, e.g. ~/.boto), the vpc-id (which is not necessary if no conflicting security group names exist, e.g. there is only one vpc), and the region-code (always necessary, although in future versions, it can be obtained from the vpc-id if present).
+
 Note that in the dashboard, unauthorized rules will be printed, which is not true for the command line. This is because the dashboard automatically configures the MySQL database necessary for unauthorized rules. The code is commented out in the apply script, if this functionality is added in the future.
 
 ### Expirations
