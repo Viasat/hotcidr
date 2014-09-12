@@ -189,7 +189,7 @@ def audit_runner(entry_id):
     entry = db.AuditJob.query.filter_by(id=entry_id).first()
     # TODO: clone first... using github credentials?
     repo = util.github_clone_url(entry.config)
-    cmd = ['hc-audit', '--output-webserver', repo]
+    cmd = ['hc-audit', '--output-webserver', repo, '--region-code', entry.config.aws_region, '--vpc-id', entry.config.aws_vpc, '--aws-access-key-id', entry.config.aws.key, '--aws-secret-access-key', entry.config.aws.secret]
     if entry.start:
         cmd += ['--from-time', entry.start.strftime('%s')]
     if entry.end:
