@@ -7,21 +7,16 @@ from util import isint
 import yaml
 
 def main(repo = None, dont_push = None, silence = None):
-    args = {}
-    args['repo'] = repo
-    args['dont_push'] = dont_push
-    args['silence'] = silence
-    
-    args['repo'], is_git_repo = util.get_valid_repo( args['repo'] )
+    repo, is_git_repo = util.get_valid_repo( repo )
 
-    groups = util.get_groups_dict(args['repo'])
+    groups = util.get_groups_dict(repo)
 
     #Sanity check expirations
     try:
-        expirationsyaml = file( os.path.join(args['repo'], 'expirations.yaml') , 'r')
+        expirationsyaml = file( os.path.join(repo, 'expirations.yaml') , 'r')
         expirations = hotcidr.state.load(expirationsyaml)
     except IOError:
-        print('Error: ' + os.path.join(args['repo'], 'expirations.yaml') + ' is missing, and is necessary for expiration checking.',file=sys.stderr)
+        print('Error: ' + os.path.join(repo, 'expirations.yaml') + ' is missing, and is necessary for expiration checking.',file=sys.stderr)
         return 1
     except yaml.scanner.ScannerError as e:
         print('Error: expirations.yaml is not properly formatted:\n' + str(e), file=sys.stderr)
@@ -40,27 +35,27 @@ def main(repo = None, dont_push = None, silence = None):
         print('ERROR: No groups loaded.',file=sys.stderr)
         return 1
 
-    if not args['silence']:
+    if not silence:
         i = 0
 
     any_rules_removed = False
     for group in groups:
         #Print processing
-        if not args['silence']:
+        if not silence:
             print('Processing ' + groups[group], file=sys.stderr)
             sys.stderr.flush()
 
         try:
-            rulesyaml = file( os.path.join(args['repo'], groups[group]) , 'r')
+            rulesyaml = file( os.path.join(repo, groups[group]) , 'r')
             rules = hotcidr.state.load(rulesyaml)
         except IOError:
-            print('Warning: ' + os.path.join(args['repo'], groups[group]) + ' is missing. It will be skipped.',file=sys.stderr)
+            print('Warning: ' + os.path.join(repo, groups[group]) + ' is missing. It will be skipped.',file=sys.stderr)
             continue
         except yaml.scanner.ScannerError as e:
-            print('Warning: ' + os.path.join(args['repo'], groups[group]) + ' is not properly formatted and will be skipped:\n' + str(e), file=sys.stderr)
+            print('Warning: ' + os.path.join(repo, groups[group]) + ' is not properly formatted and will be skipped:\n' + str(e), file=sys.stderr)
             continue
 
-        added_rules = util.get_added_deleted_rules( args['repo'], groups[group] )['added']
+        added_rules = util.get_added_deleted_rules( repo, groups[group] )['added']
         rules_removed = False
 
         for added_rule in added_rules:
@@ -91,7 +86,7 @@ def main(repo = None, dont_push = None, silence = None):
             #Handle expirations in <group>.yaml
             if 'expiration' in added_rule and isint(added_rule['expiration']):
                 if int(added_rule['expiration']) < int(time.time()) - int(added_rule['date']):
-                    if not args['silence']:
+                    if not silence:
                         print('Removed rule: ' + str(added_rule))
                     added_rules.remove(added_rule)
                     rules_removed = True
@@ -107,30 +102,30 @@ def main(repo = None, dont_push = None, silence = None):
 
             #Edit yaml with new rules
             rules['rules'] = added_rules
-            f = open( os.path.join( args['repo'], groups[group] ), 'w' )
+            f = open( os.path.join( repo, groups[group] ), 'w' )
             f.write( hotcidr.state.dump(rules, default_flow_style=False) )
             f.close()
 
         #Print progress
-        if not args['silence']:
+        if not silence:
             i += 1
             print('Progress: ' + str(int(100*i/groups_num)), file=sys.stderr)
 
     #Commit and push changes if there were any rule changes
     if any_rules_removed:
         #Commit and push file
-        git.Git( args['repo'] ).add( groups[group] ) 
-        git.Git( args['repo'] ).commit('-m','Automatically removed expired rule')
+        git.Git( repo ).add( groups[group] ) 
+        git.Git( repo ).commit('-m','Automatically removed expired rule')
 
-        if not args['dont_push']:
+        if not dont_push:
             try:
-                git.Git( args['repo'] ).push()
+                git.Git( repo ).push()
             except git.exc.GitCommandError:
-                print('Error: ' + args['repo'] + ' cannot be pushed: no remote exists? Try specifying the --dont-push argument.')
+                print('Error: ' + repo + ' cannot be pushed: no remote exists? Try specifying the --dont-push argument.')
                 return 1
 
     #Remove temporary git repo
     if is_git_repo:
-        rmtree( args['repo'] )
+        rmtree( repo )
 
     return 0

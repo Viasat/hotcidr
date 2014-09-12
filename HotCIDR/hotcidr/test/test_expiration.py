@@ -155,7 +155,6 @@ class TestExpiration(unittest.TestCase):
         test_file = open(test_file_path, 'r')
         yaml_none = yaml.load(test_file)
         test_file.close()
-        print(test_file_path)
         self.assertEqual(len(yaml_none['rules']), 0)
 
         #Clean up temp directory
