@@ -4,6 +4,7 @@ from hotcidr import state
 import boto.ec2
 import boto.vpc
 import contextlib
+import functools
 import git
 import hashlib
 import json
@@ -418,6 +419,8 @@ def get_connection(vpc_id, region, **k):
                 return orig_get_all_security_groups(**k)
             conn.get_only_instances = get_only_instances
             conn.get_all_security_groups = get_all_security_groups
+            conn.create_security_group = functools.partial(
+                    conn.create_security_group, vpc_id=vpc_id)
 
             return conn
 
