@@ -1,8 +1,0 @@
-{% extends 'layout_main.html' %}
-{% block title %}AWS {{ aws.disp }}{% endblock %}
-{% block subtitle %}AWS: {{ aws.disp }} <a style="font-size: 0.6em;" href="{{ url_for('edit_aws', slug=aws.slug) }}"><span class="glyphicon glyphicon-pencil"></span></a>{% endblock %}
-{% block content %}
-<div>API Key: {{ aws.key }}</div>
-
-<div>API Secret: {{ aws.secret }}</div>
-{% endblock %}

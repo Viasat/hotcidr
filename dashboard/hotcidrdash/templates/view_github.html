@@ -1,8 +1,0 @@
-{% extends 'layout_main.html' %}
-{% block title %}GitHub {{ git.disp }}{% endblock %}
-{% block subtitle %}GitHub: {{ git.disp }} <a style="font-size: 0.6em;" href="{{ url_for('edit_git', slug=git.slug) }}"><span class="glyphicon glyphicon-pencil"></span></a>{% endblock %}
-{% block content %}
-<div>API URL: {{ git.url }}</div>
-
-<div>API Token: {{ git.token }}</div>
-{% endblock %}

@@ -1,7 +1,0 @@
-{% extends 'layout_main.html' %}
-{% block title %}Applying {{ conf.disp }}{% endblock %}
-{% block subtitle %}Applying: {{ conf.disp }}{% endblock %}
-{% set active_page = 'config_' + job.config.slug %}
-{% block content %}
-<pre>{{ job.output }}</pre>
-{% endblock %}
