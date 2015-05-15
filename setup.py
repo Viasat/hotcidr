@@ -1,16 +1,18 @@
 from distutils.core import setup
 
+import hotcidr
+
 setup(
     name='HotCIDR',
-    version='0.1.0',
-    author='ViaSat',
+    version=hotcidr.__version__,
+    author=hotcidr.__author__,
     author_email='stephan.kemper@viasat.com',
     packages=['hotcidr', 'hotcidr.test'],
     scripts=['bin/hc-apply', 'bin/hc-audit', 'bin/hc-validate', 'bin/hc-fetch', 'bin/hc-deleteexpired'],
-    #url='http://pypi.python.org/pypi/HotCIDR',
-    license='LICENSE.txt',
+    url='https://github.com/ViaSat/hotcidr',
+    license=hotcidr.__license__,
     description="Firewall rule management and automation tools",
-    #long_description=open('README.txt').read(),
+    # long_description=open('README.txt').read(),
     install_requires=[
         "GitPython >= 0.3.2.RC1",
         "MySQL-python >= 1.2.5",

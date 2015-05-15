@@ -4,3 +4,4 @@ build
 *.swp
 *.pyc
 *.bak
+*.egg-info
