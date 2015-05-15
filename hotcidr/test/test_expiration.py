@@ -24,6 +24,8 @@ class TestExpiration(unittest.TestCase):
 
         # Initially commit repo
         git.Git(test_repo_path).init()
+        git.Git(test_repo_path).config('user.name', '"Test User"')
+        git.Git(test_repo_path).config('user.email', '"test@example.com"')
         git.Git(test_repo_path).add('*')
         git.Git(test_repo_path).commit('-m', 'Initial commit')
 
@@ -99,6 +101,8 @@ class TestExpiration(unittest.TestCase):
 
         # Initially commit repo
         git.Git(test_repo_path).init()
+        git.Git(test_repo_path).config('user.name', '"Test User"')
+        git.Git(test_repo_path).config('user.email', '"test@example.com"')
         git.Git(test_repo_path).add('*')
         git.Git(test_repo_path).commit('-m', 'Initial commit')
 
