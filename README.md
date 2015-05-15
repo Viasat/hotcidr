@@ -1,4 +1,4 @@
-Hot CIDR
+Hot CIDR [![Build Status](https://travis-ci.org/ViaSat/hotcidr.svg?branch=develop)](https://travis-ci.org/ViaSat/hotcidr)
 ========
 
 Hot CIDR provides tools for firewall rule management and automation. The
@@ -43,7 +43,7 @@ HotCIDR% python setup.py install
 
 ### Jenkins CI Setup
 - Install jenkins and configure
-- Install and configure [ghprb plugin](https://git.viasat.com/jkwan/ghprb-fork#installation)
+- Install and configure ghprb plugin
 - Customize provided validate script for running the job
 
 
@@ -127,7 +127,7 @@ rules:
 - direction: inbound
   protocol: all
   location: 0.0.0.0/0
-  expiration: 86400 
+  expiration: 86400
 ```
 
 This example will cause any rule in the entire repository matching the direction, protocol and location fields to be removed 1 day after it was committed.
@@ -142,7 +142,7 @@ rules:
   expiration: 1
 ```
 
-Will cause every rule in the entire repo with 'ports: 443' to be deleted instantly. 
+Will cause every rule in the entire repo with 'ports: 443' to be deleted instantly.
 
 
 Authors
