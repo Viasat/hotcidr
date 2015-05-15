@@ -1,7 +1,7 @@
 #!/usr/bin/env/python2
-import collections
 import unittest
 import hotcidr.validation as validation
+
 
 class TestLogger(object):
     def __init__(self):
@@ -325,7 +325,6 @@ class TestValidatePorts(TestCase):
         self.v.expect_warn("Rule 1 in group has a large port range")
 
 
-
 class TestValidateRuleFields(TestCase):
     def setUp(self):
         self.v = Validator()
@@ -358,9 +357,7 @@ class TestValidateRuleFields(TestCase):
                 ]
             }
         }
-        self.v.expect_warn("Rule 1 in group1 is missing a justification")
         self.v.expect_warn("Rule 2 in group1 is missing a description")
-        self.v.expect_warn("Rule 3 in group1 is missing a justification")
         self.v.expect_warn("Rule 3 in group1 is missing a description")
 
 
@@ -386,20 +383,17 @@ class TestValidateGroupFields(TestCase):
     def test_invalid(self):
         self.v.groups = {
             'group1': {
-                'id': 'sg-7890abcd',
+                'description': 'Sample group 1'
             },
             'group2': {
-                'description': 'Sample group 2',
                 'rules': []
             },
             'group3': {}
         }
-        self.v.expect_warn('group1 is missing a description')
         self.v.expect_warn('group1 is missing rules')
-        self.v.expect_warn('group2 is missing an id')
+        self.v.expect_warn('group2 is missing a description')
         self.v.expect_warn('group3 is missing a description')
         self.v.expect_warn('group3 is missing rules')
-        self.v.expect_warn('group3 is missing an id')
 
 
 class TestValidateInstanceFields(TestCase):
@@ -456,7 +450,7 @@ class TestValidateLocations(TestCase):
             'a': {'id': 'sg-55555555'},
             'b': {
                 'rules': [
-                    {'location': 'sg-55555555'},
+                    {'location': 'a'},
                     {'location': '0.0.0.0/0'},
                     {'location': '10.8.0.1/32'},
                 ]
@@ -474,7 +468,7 @@ class TestValidateLocations(TestCase):
                 ]
             }
         }
-        self.v.expect_error("Rule 1 in b has an invalid location")
+        self.v.expect_error("Rule 1 in b has invalid location 'd'")
         self.v.expect_warn("Location for rule 2 in b will be interpreted as 192.168.1.0/24")
         self.v.expect_warn("Location for rule 3 in b will be interpreted as 0.0.0.0/0")
 

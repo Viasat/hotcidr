@@ -252,6 +252,6 @@ def validate_locations(self):
                             self.warn("Location for rule %d in %s "
                                       "will be interpreted as %s" % (rule_num, group_name, ip.cidr))
                     except netaddr.AddrFormatError:
-                        self.error("Rule %d in %s has an invalid location" % (rule_num, group_name))
+                        self.error("Rule %d in %s has invalid location '%s'" % (rule_num, group_name, rule['location']))
             else:
                 self.error("Rule %d in %s is missing a location" % (rule_num, group_name))

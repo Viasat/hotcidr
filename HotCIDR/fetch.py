@@ -10,8 +10,10 @@ import sys
 import tempfile
 import yaml
 
+
 def dump(x):
     return state.dump(x, default_flow_style=False)
+
 
 def append_to_rules(connection, rules, group, rule, grant, inout_str, nameid_lookup):
     srcip_str = None
