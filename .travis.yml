@@ -3,5 +3,6 @@ python:
     - "2.7"
 install:
     - "pip install -r requirements.txt"
+    - "pwd && ls"
     - "python setup.py install"
 script: python -m unittest discover -s hotcidr
