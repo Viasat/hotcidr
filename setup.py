@@ -1,9 +1,9 @@
-from distutils.core import setup
+from setuptools import setup
 
 import hotcidr
 
 setup(
-    name='HotCIDR',
+    name='hotcidr',
     version=hotcidr.__version__,
     author=hotcidr.__author__,
     author_email='stephan.kemper@viasat.com',

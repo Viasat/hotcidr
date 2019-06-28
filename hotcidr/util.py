@@ -1,12 +1,14 @@
 from __future__ import print_function
 from shutil import rmtree
 from hotcidr import state
+
 import boto.ec2
 import boto.vpc
 import contextlib
 import git
 import hashlib
 import json
+import logging
 import os
 import requests
 import shutil
@@ -15,7 +17,10 @@ import tempfile
 import time
 import yaml
 
-#This function is different than isinstance(n,int) in that it will pass for strings: e.g. '1'
+LOG = logging.getLogger(__name__)
+
+
+# This function is different than isinstance(n,int) in that it will pass for strings: e.g. '1'
 def isint(n):
     try:
         int(n)
@@ -23,17 +28,19 @@ def isint(n):
     except:
         return False
 
-#socket.inet_aton(addr) is not used here since EC2 addresses cannot be integers - they must be "x:x:x:x/x"
+
+# socket.inet_aton(addr) is not used here since EC2 addresses cannot be integers - they must be "x:x:x:x/x"
 def is_cidr(s):
     if hasattr(s, 'split'):
-        n = s.split('.',4)
+        n = s.split('.', 4)
         if isint(n[0]) and isint(n[1]) and isint(n[2]):
-            n3 = n[3].split('/',1)
+            n3 = n[3].split('/', 1)
             if isint(n3[0]) and (len(n3) == 1 or isint(n3[1])):
                 return True
-    return False    
+    return False
 
-#Check if valid vpc string
+
+# Check if valid vpc string
 def is_valid_vpc(vpc):
     valid_regions = set([
         'ap-northeast-1',
@@ -47,13 +54,15 @@ def is_valid_vpc(vpc):
 
     return vpc in valid_regions
 
-expected_rule_fields = ['direction','protocol','location']
+expected_rule_fields = ['direction', 'protocol', 'location']
 
-#Load boxes
+
+# Load boxes
 def load_boxes(d):
     return state.load(open(os.path.join(d, 'boxes.yaml')))
 
-#Load groups
+
+# Load groups
 def load_groups(d, ext='.yaml'):
     groups_dir = os.path.join(d, 'groups')
     assert(os.path.isdir(groups_dir))
@@ -65,7 +74,8 @@ def load_groups(d, ext='.yaml'):
             r[group_name] = state.load(open(f))
     return r
 
-#Get a hash string from a rule
+
+# Get a hash string from a rule
 def get_hash_from_rule(rule_orig):
     rule = rule_orig.copy()
 
@@ -73,12 +83,12 @@ def get_hash_from_rule(rule_orig):
         if field not in rule:
             rule[field] = ''
 
-    if not 'justification' in rule:
+    if 'justification' not in rule:
         justification = ''
     else:
         justification = rule['justification']
 
-    if not 'expiration' in rule:
+    if 'expiration' not in rule:
         expiration = ''
     else:
         expiration = rule['expiration']
@@ -103,99 +113,101 @@ def get_hash_from_rule(rule_orig):
     hash.update(identifier)
     return str(hash.digest())
 
-#Given the repo path, return a dict of the groups
+
+# Given the repo path, return a dict of the groups
 def get_groups_dict(repo_path):
     groups_dict = {}
-    for dirname,dirnames,filenames in os.walk(os.path.join(repo_path,'groups')):
+    for dirname, dirnames, filenames in os.walk(os.path.join(repo_path, 'groups')):
         for filename in filenames:
             if filename.endswith('.yaml'):
-                groups_dict[filename.rsplit('.',1)[0]] = 'groups/' + filename
+                groups_dict[filename.rsplit('.', 1)[0]] = 'groups/' + filename
     return groups_dict
 
-#git_api_url: Api url for git, e.g. 'api.github.com', 'git.viasat.com/api/v3'
-#repo_name: Desired repo name for the new repo, e.g. 'us-west-2-core'
-#vpc: The vpc region code, e.g. 'us-west-2'
-#auth: The personal access token. Created in git: Account Settings/Applications/Personal Access Tokens
+
+# git_api_url: Api url for git, e.g. 'api.github.com', 'git.viasat.com/api/v3'
+# repo_name: Desired repo name for the new repo, e.g. 'us-west-2-core'
+# vpc: The vpc region code, e.g. 'us-west-2'
+# auth: The personal access token. Created in git: Account Settings/Applications/Personal Access Tokens
 def create_remote_repo(git_api_url, vpc, repo_name, auth):
     if not is_valid_vpc(vpc):
-        print('ERROR: Remote repo could not be created: ' + vpc + ' is not a valid vpc-region-code.')
+        LOG.error('Remote repo could not be created; %s is not a valid VPC ID' % vpc)
         return None
 
     auth_header = {'Authorization': 'token ' + auth}
     try:
-        repo_user = json.loads(requests.get(git_api_url + 'user', headers=auth_header).content)['login'] 
+        repo_user = json.loads(requests.get(git_api_url + 'user', headers=auth_header).content)['login']
     except ValueError:
-        print('ERROR: ' + git_api_url + ' did not respond. URL is invalid or inaccessible.')
+        LOG.error('%s did not respond. URL is invalid or inaccessible.' % git_api_url)
         return None
-    
-    #Get list of repos
+
+    # Get list of repos
     repos = {}
     repos_response_url = json.loads(requests.get(git_api_url + 'user', headers=auth_header).content)['repos_url']
     repos_response = json.loads(requests.get(repos_response_url, headers=auth_header).content)
     for r in repos_response:
-        repos[ r['name'].encode('utf-8') ] = r['ssh_url'].encode('utf-8')
+        repos[r['name'].encode('utf-8')] = r['ssh_url'].encode('utf-8')
 
-    #Prompt user to delete repo if it exists already
+    # Prompt user to delete repo if it exists already
     if repo_name in repos.keys():
         desired_repo_url = repos[repo_name]
         var = raw_input('Warning: ' + desired_repo_url + ' already exists. Delete it? (y/n) ')
     else:
-        var ='n'
+        var = 'n'
 
-    #Delete repo if it exists
+    # Delete repo if it exists
     if var == 'y':
-        r = requests.delete(git_api_url + 'repos/' + repo_user + '/' + repo_name, headers=auth_header)
-        print('Deleted ' + desired_repo_url)
+        r = requests.delete('%s/repos/%s/%s' % (git_api_url, repo_user, repo_name), headers=auth_header)
+        LOG.info('Deleted ' + desired_repo_url)
 
-        #After the delete request is successful, we must wait for it to be processed.
-        #Ideally we would probe the repo, but it says 'repo not found' even before it has been deleted entirely
-        #Additionally, the status code is successful even when the request hasn't been processed yet
-        #Thus I wait 5 seconds, which is usually enough time
-        print('Waiting 5 seconds for delete request to be processed')
+        # After the delete request is successful, we must wait for it to be processed.
+        # Ideally we would probe the repo, but it says 'repo not found' even before it has been deleted entirely
+        # Additionally, the status code is successful even when the request hasn't been processed yet
+        # Thus I wait 5 seconds, which is usually enough time
+        LOG.debug('Waiting 5 seconds for delete request to be processed')
         time.sleep(5)
 
-    #Create repo
-    r = requests.post(git_api_url + 'user/repos', json.dumps({'name':repo_name}), headers=auth_header)
+    # Create repo
+    r = requests.post(git_api_url + 'user/repos', json.dumps({'name': repo_name}), headers=auth_header)
 
-    #Get list of repos
+    # Get list of repos
     repos = {}
     repos_response_url = json.loads(requests.get(git_api_url + 'user', headers=auth_header).content)['repos_url']
     repos_response = json.loads(requests.get(repos_response_url, headers=auth_header).content)
     for r in repos_response:
-        repos[ r['name'].encode('utf-8') ] = r['ssh_url'].encode('utf-8')
+        repos[r['name'].encode('utf-8')] = r['ssh_url'].encode('utf-8')
 
     if repo_name in repos.keys():
         desired_repo_url = repos[repo_name]
     else:
         desired_repo_url = ''
 
-    print('Added ' + desired_repo_url) 
+    LOG.info('Added %s' % desired_repo_url)
 
     return desired_repo_url
 
-#Check for git repo existence: create directory if it is a repo, else load directory normally
-def get_valid_repo( repo ):
 
-    if repo == None:
-        print('ERROR: git repo is specified as \"None\". Please enter in a valid repo or clone url.',file=sys.stderr)
+# Check for git repo existence: create directory if it is a repo, else load directory normally
+def get_valid_repo(repo):
+    if repo is None:
+        LOG.error('Git repo is specified as \"None\". Please enter in a valid repo or clone url.')
         return None, None
 
-    #If the repo is not a directory
+    # If the repo is not a directory
     if not os.path.isdir(repo):
         is_git_repo = True
 
         if not repo.endswith('.git'):
-            print('Error: ' + repo + ' is not a directory nor a valid git clone URL.', file=sys.stderr)
+            LOG.error(repo + ' is not a directory nor a valid git clone URL.')
             return None, None
 
         try:
-            git.Git().ls_remote( repo )
+            git.Git().ls_remote(repo)
         except:
-            print('Error: ' + repo + ' is not a valid git clone URL.', file=sys.stderr)
+            LOG.error(repo + ' is not a valid git clone URL.')
 
-        #Get new repo location
+        # Get new repo location
         gitrepo_location = tempfile.mkdtemp()
-        new_repo_path = os.path.join(gitrepo_location, repo.rsplit('/',1)[1].rsplit('.',1)[0])
+        new_repo_path = os.path.join(gitrepo_location, repo.rsplit('/', 1)[1].rsplit('.', 1)[0])
         new_full_path = os.path.join(gitrepo_location, new_repo_path)
 
         if os.path.exists(new_full_path):
@@ -204,113 +216,117 @@ def get_valid_repo( repo ):
 
         repo = new_repo_path
 
-    #If the repo is a directory, check that it is a git repo
+    # If the repo is a directory, check that it is a git repo
     else:
         is_git_repo = False
 
         try:
-            git.Git( repo ).status()
+            git.Git(repo).status()
         except:
-            print('ERROR: ' + repo + ' is not a valid git repo. Try \'git init\' in that directory before continuing.',file=sys.stderr)
+            LOG.error(repo + ' is not a valid git repo. Try \'git init\' in that directory before continuing.')
             return None, None
 
         try:
-            git.Git( repo ).log()
+            git.Git(repo).log()
         except:
-            print('ERROR: ' + repo + ' has no commits. Commit before continuing.',file=sys.stderr)
+            LOG.error(repo + ' has no commits. Commit before continuing.')
             return None, None
 
         try:
-            git.Git( repo ).pull()
+            git.Git(repo).pull()
         except:
-            #print('Warning: ' + repo + ' could not be pulled - no remote exists?',file=sys.stderr)
+            LOG.warn(repo + ' could not be pulled - no remote exists?')
             pass
 
     return repo, is_git_repo
 
+
 def get_init_commit(git_dir, yamlfile):
-    init_commit = git.Git( git_dir ).log('--format="%an;%at;%H"', yamlfile).split('\n')[-1][1:-1].rsplit(';',2)
+    init_commit = git.Git(git_dir).log('--format="%an;%at;%H"', yamlfile).split('\n')[-1][1:-1].rsplit(';', 2)
     init_commit[2] = init_commit[2].rsplit('\n',1)[0]
     return init_commit
+
 
 def get_git_commit(hexsha, git_dir, yamlfile):
     init_commit = get_init_commit(git_dir, yamlfile)
     if init_commit[2] == hexsha:
-        commit_message = git.Git( git_dir ).log(hexsha, '--format=\"%B\"').replace('\n', ' ')[1:-1].rstrip()
+        commit_message = git.Git(git_dir).log(hexsha, '--format=\"%B\"').replace('\n', ' ')[1:-1].rstrip()
         return commit_message
     else:
-        commit_message = git.Git( git_dir ).log('--ancestry-path', hexsha + '^..' + hexsha, '--format=\"%B\"').replace('\n', ' ')[1:-1].rstrip()
+        commit_message = git.Git(git_dir).log('--ancestry-path', hexsha + '^..' + hexsha, '--format=\"%B\"').replace('\n', ' ')[1:-1].rstrip()
         return commit_message
 
-#Get the author and date of a commits approval. There are three cases:
-#1. The commit is the initial one - return its author and date
-#2. The commit is the child of a merge of two commits - return the merge author and date
-#3. The commit is not the initial one, and has no merge above it. Return its author and date
+
+# Get the author and date of a commits approval. There are three cases:
+# 1. The commit is the initial one - return its author and date
+# 2. The commit is the child of a merge of two commits - return the merge author and date
+# 3. The commit is not the initial one, and has no merge above it. Return its author and date
 #    This can happen if it has been changed directly in the repo, perhaps by an admin.
 def get_commit_approved_authdate(commit_hexsha, git_dir, yamlfile):
-    #1. Check if the commit is the initial commit
-    #This is needed since the next Git command run will check <commit_hexsha>^, the parent, which won't exist if the commit is the initial one.
+    # 1. Check if the commit is the initial commit
+    # This is needed since the next Git command run will check <commit_hexsha>^, the parent, which won't exist if the commit is the initial one.
     init_commit = get_init_commit(git_dir, yamlfile)
     if commit_hexsha == init_commit[2]:
-        return {'author':init_commit[0], 'date':init_commit[1]}
+        return {'author': init_commit[0], 'date': init_commit[1]}
 
-    #If not the initial commit, traverse the ancestry path to look for either a merge or direct change
-    next_commits = git.Git( git_dir ).log('--reverse', '--ancestry-path', commit_hexsha + '^..master', '--format="%an;%at;%P"').split('\n')
+    # If not the initial commit, traverse the ancestry path to look for either a merge or direct change
+    next_commits = git.Git(git_dir).log('--reverse', '--ancestry-path', commit_hexsha + '^..master', '--format="%an;%at;%P"').split('\n')
 
-    #Remove quotes
-    for l in range(0,len(next_commits)):
+    # Remove quotes
+    for l in range(0, len(next_commits)):
         next_commits[l] = next_commits[l][1:-1]
 
     if len(next_commits) > 0:
-        #2. Check if commit was merged
+        # 2. Check if commit was merged
         if len(next_commits) > 1:
-            next_commit = next_commits[1].rsplit(';',2)
+            next_commit = next_commits[1].rsplit(';', 2)
             if len(next_commit) == 3:
-                auth,date,hexsha = next_commit
+                auth, date, hexsha = next_commit
 
-                #This is true when two hexshas are listed in the log, meaning a merger
-                if len(hexsha.split(' ')) == 2: 
-                    #This is true when the commit hexsha is one of the merged ones
+                # This is true when two hexshas are listed in the log, meaning a merger
+                if len(hexsha.split(' ')) == 2:
+                    # This is true when the commit hexsha is one of the merged ones
                     if commit_hexsha == hexsha.split(' ')[0] or commit_hexsha == hexsha.split(' ')[1]:
-                        return {'author':auth, 'date':date}
+                        return {'author': auth, 'date': date}
 
-        #3. Check if commit was directly changed, such that no merge exists
-        curr_ad = git.Git( git_dir ).log('--reverse', '--ancestry-path', commit_hexsha + '^..' + commit_hexsha, '--format="%an;%at"')
+        # 3. Check if commit was directly changed, such that no merge exists
+        curr_ad = git.Git(git_dir).log('--reverse', '--ancestry-path', commit_hexsha + '^..' + commit_hexsha, '--format="%an;%at"')
 
-        #Strip quotes and seperate author and date
-        curr_ad = curr_ad[1:-1].rsplit(';',1)
+        # Strip quotes and seperate author and date
+        curr_ad = curr_ad[1:-1].rsplit(';', 1)
         if len(curr_ad) == 2:
-            auth,date = curr_ad
-            return {'author':auth, 'date':date}
+            auth, date = curr_ad
+            return {'author': auth, 'date': date}
 
-    #The commit does not exist in the repo, or something is horribly wrong in the repo or this code
-    return {'author':'n/a', 'date':'n/a'}
+    # The commit does not exist in the repo, or something is horribly wrong in the repo or this code
+    return {'author': 'n/a', 'date': 'n/a'}
 
-#Given a rules yaml file in a git directory, return a dictionary of rules that represents the history adding/deleting of rules
-#Within the dictionary, each rule will have three fields added: author & date (of the action), and hexsha (when the action was committed)
-#Added: Rules that exist in the yaml currently
-#Deleted: Rules that were deleted from the yaml
-#Added previously: For each deleted rule, there will be an added_previously rule, including the author/date/commit of the original addition
+
+# Given a rules yaml file in a git directory, return a dictionary of rules that represents the history adding/deleting of rules
+# Within the dictionary, each rule will have three fields added: author & date (of the action), and hexsha (when the action was committed)
+# Added: Rules that exist in the yaml currently
+# Deleted: Rules that were deleted from the yaml
+# Added previously: For each deleted rule, there will be an added_previously rule, including the author/date/commit of the original addition
 def get_added_deleted_rules( git_dir, yamlfile ):
-    added_deleted_rules = {'added':[], 'deleted':[], 'added_previously':[]}
+    added_deleted_rules = {'added': [], 'deleted': [], 'added_previously': []}
     commits_rules_list = []
 
-    #Get commit history for file
-    adh_list = git.Git( git_dir ).log('--format="%an;%at;%H"', '--follow', yamlfile).split('\n')
+    # Get commit history for file
+    adh_list = git.Git(git_dir).log('--format="%an;%at;%H"', '--follow', yamlfile).split('\n')
 
-    #Remove quotes
-    for l in range(0,len(adh_list)):
+    # Remove quotes
+    for l in range(0, len(adh_list)):
         adh_list[l] = adh_list[l][1:-1]
 
     for adh in adh_list:
         if len(adh):
-            author = adh.split(';',2)[0]
-            date = adh.split(';',2)[1]
-            commit_hexsha = adh.split(';',2)[2]
+            author = adh.split(';', 2)[0]
+            date = adh.split(';', 2)[1]
+            commit_hexsha = adh.split(';', 2)[2]
 
-            #Get yaml file and load its contents, unless the group doesn't exist in the current commit yet
+            # Get yaml file and load its contents, unless the group doesn't exist in the current commit yet
             try:
-                yamlfile_data = git.Git( git_dir ).show(commit_hexsha + ':' + yamlfile)
+                yamlfile_data = git.Git(git_dir).show(commit_hexsha + ':' + yamlfile)
             except git.exc.GitCommandError:
                 continue
 
@@ -320,7 +336,7 @@ def get_added_deleted_rules( git_dir, yamlfile ):
             try:
                 rules = state.load(yamlfile_data)
 
-            #Past version of the yaml file had a formatting error
+            # Past version of the yaml file had a formatting error
             except yaml.scanner.ScannerError:
                 continue
             except TypeError:
@@ -344,49 +360,50 @@ def get_added_deleted_rules( git_dir, yamlfile ):
 
             commits_rules_list.append(rules_dict)
 
-    #Reverse so that commits are in chronological order - this way, we implicitly know which commits are earliest
+    # Reverse so that commits are in chronological order - this way, we implicitly know which commits are earliest
     commits_rules_list.reverse()
 
-    #Add all rules from initial commit into 'added'
+    # Add all rules from initial commit into 'added'
     if len(commits_rules_list) > 0:
         for rule_hash in commits_rules_list[0]:
             init_added_rule = commits_rules_list[0][rule_hash].copy()
             added_deleted_rules['added'].append(init_added_rule)
 
-    #Get added and deleted by comparing each pair of sequential commits
+    # Get added and deleted by comparing each pair of sequential commits
     if len(commits_rules_list) > 1 and len(commits_rules_list[0].values()) > 0:
-        for i in range(0,len(commits_rules_list)-1):
+        for i in range(0, len(commits_rules_list)-1):
             commit = commits_rules_list[i]
             commit_next = commits_rules_list[i+1]
 
             for rule_hash in commit_next:
-                if not rule_hash in commit:
+                if rule_hash not in commit:
                     added_rule = commit_next[rule_hash].copy()
                     added_deleted_rules['added'].append(added_rule)
 
             for rule_hash in commit:
-                if not rule_hash in commit_next:
+                if rule_hash not in commit_next:
                     deleted_rule = commit[rule_hash].copy()
 
-                    #Set author, date, and hexsha to those of commit_next
+                    # Set author, date, and hexsha to those of commit_next
                     deleted_rule['author'] = commit_next.values()[0]['author']
                     deleted_rule['date'] = commit_next.values()[0]['date']
                     deleted_rule['hexsha'] = commit_next.values()[0]['hexsha']
 
                     added_deleted_rules['deleted'].append(deleted_rule)
 
-                    #Move this rule from 'added' to 'added_previously'
-                    for ar in added_deleted_rules['added']: 
+                    # Move this rule from 'added' to 'added_previously'
+                    for ar in added_deleted_rules['added']:
                         if get_hash_from_rule(deleted_rule) == get_hash_from_rule(ar):
                             added_deleted_rules['added_previously'].append(
                                 added_deleted_rules['added'].pop( added_deleted_rules['added'].index(ar)) )
 
-    #Reverse added_deleted_rules so that they are in reverse chronological order - the most recent rule changes should show first
+    # Reverse added_deleted_rules so that they are in reverse chronological order - the most recent rule changes should show first
     added_deleted_rules['added'].reverse()
     added_deleted_rules['deleted'].reverse()
     added_deleted_rules['added_previously'].reverse()
 
     return added_deleted_rules
+
 
 @contextlib.contextmanager
 def repo(repo, sha1=None):
@@ -396,6 +413,7 @@ def repo(repo, sha1=None):
     yield git_dir
     if is_clone_url:
         shutil.rmtree(git_dir)
+
 
 def get_connection(vpc_id, region, **k):
     c = boto.vpc.connect_to_region(region, **k)
@@ -408,22 +426,27 @@ def get_connection(vpc_id, region, **k):
             # Monkey patch get_only_instances/get_all_security_groups
             orig_get_only_instances = conn.get_only_instances
             orig_get_all_security_groups = conn.get_all_security_groups
+
             def get_only_instances(**k):
                 k.setdefault('filters', {})
                 k['filters'].setdefault('vpc-id', vpc_id)
                 return orig_get_only_instances(**k)
+
             def get_all_security_groups(**k):
                 k.setdefault('filters', {})
                 k['filters'].setdefault('vpc-id', vpc_id)
                 return orig_get_all_security_groups(**k)
+
             conn.get_only_instances = get_only_instances
             conn.get_all_security_groups = get_all_security_groups
 
             return conn
 
+
 def get_id_for_group(conn, sgname):
     for sg in conn.get_all_security_groups(filters={'group-name': sgname}):
         return sg.id
+
 
 def get_hexsha(repo):
     return git.Repo(repo).heads.master.commit.hexsha

@@ -1,11 +1,12 @@
 #!/usr/bin/python
-import boto.ec2
 import collections
+import git
 import itertools
 import sys
 
 from hotcidr import fetch
 from hotcidr import util
+
 
 class Action(object):
     def __call__(self, conn):
@@ -21,6 +22,7 @@ class Action(object):
     def __hash__(self):
         return tuple(self.__dict__.items()).__hash__()
 
+
 class CreateSecurityGroup(Action):
     def __init__(self, name, desc):
         self.name = name
@@ -31,6 +33,7 @@ class CreateSecurityGroup(Action):
 
     def __repr__(self):
         return "Create new security group %s (%s)" % (self.name, self.desc)
+
 
 class ModifyInstanceAttribute(Action):
     def __init__(self, inst_id, attr, value):
@@ -45,6 +48,7 @@ class ModifyInstanceAttribute(Action):
 
     def __repr__(self):
         return "Set %s of %s to %s" % (self.attr, self.inst_id, self.value)
+
 
 class ModifyRule(Action):
     def __init__(self, group, rule):
@@ -76,13 +80,14 @@ class ModifyRule(Action):
         if util.is_cidr(loc):
             f(cidr_ip=loc, **k)
         else:
-            #Boto uses src_group_id or src_security_group_group_id to mean the
-            #same thing depending on which function f is used here.
+            # Boto uses src_group_id or src_security_group_group_id to mean the
+            # same thing depending on which function f is used here.
             loc = util.get_id_for_group(conn, loc)
             try:
                 f(src_group_id=loc, **k)
             except TypeError:
                 f(src_security_group_group_id=loc, **k)
+
 
 class RemoveRule(ModifyRule):
     def run(self, conn):
@@ -99,6 +104,7 @@ class RemoveRule(ModifyRule):
         return "Del rule (%s, %s, %s) from %s" % (
                 self.rule.protocol, self.rule.ports,
                 self.rule.location, self.group)
+
 
 class AddRule(ModifyRule):
     def run(self, conn):
@@ -118,6 +124,8 @@ class AddRule(ModifyRule):
 
 rule_attr = ('direction', 'location', 'protocol', 'ports')
 Rule = collections.namedtuple('Rule', rule_attr)
+
+
 def rules(group):
     if 'rules' in group:
         for rule in group['rules']:
@@ -125,6 +133,7 @@ def rules(group):
             for attr in rule_attr:
                 r.setdefault(attr, None)
             yield Rule(**r)
+
 
 def get_actions(old_dir, new_dir):
     old_instances = util.load_boxes(old_dir)
@@ -151,7 +160,7 @@ def get_actions(old_dir, new_dir):
         else:
             print("Skipping instance %s (Does not exist in AWS)" % old_id)
 
-    #TODO: Delete security groups that are unused
+    # TODO: Delete security groups that are unused
 
     # Update rules for each security group
     for g, new_group in new_groups.items():
@@ -167,6 +176,7 @@ def get_actions(old_dir, new_dir):
                 yield RemoveRule(g, rule)
             for rule in new_rules - old_rules:
                 yield AddRule(g, rule)
+
 
 def changes(actions, unauthorized=0):
     objs = dict(zip([
@@ -200,9 +210,9 @@ def changes(actions, unauthorized=0):
         return "No changes"
     return ", ".join(r)
 
+
 def main(git_repo, region_code, vpc_id, aws_key, aws_secret, dry_run, expected_repo=None):
-    with fetch.vpc(region_code, vpc_id, aws_key, aws_secret) as aws_dir,\
-         util.repo(git_repo) as git_dir:
+    with fetch.vpc(region_code, vpc_id, aws_key, aws_secret) as aws_dir, util.repo(git_repo) as git_dir:
         unauthorized_actions = []
         if expected_repo:
             try:

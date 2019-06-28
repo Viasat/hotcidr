@@ -1,4 +1,4 @@
-GitPython >= 0.3.2.RC1
+GitPython >= 1.0.1
 MySQL-python >= 1.2.5
 PyYAML >= 3.10
 boto >= 2.28.0

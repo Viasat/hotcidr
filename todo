@@ -1,0 +1,21 @@
+To-do list for the firewall manager
+
+Validation:
+  Check for non-reverse rules (each incoming should have a corresponding outgoing), and automatically commit reverse rule
+  Rule overlap - Print out warning for redundant rules
+  Critical error for removing 443 access in fwman.yaml
+  Automatically commit changing 'location: w.x.y.z/0' to 'location: 0.0.0.0/0'
+  Automatically commit an expiration date to a rule with 'ports: -1--1'
+  Spell-check/suggestion for security groups that don't exist but are similar to ones listed in groups.yaml
+
+New Integration:
+  Openstack
+  Juniper/Cisco
+  Perforce
+  VMware ESX
+
+Advanced:
+  Templating/clusters
+  In-memory network simulation (Discover edge instances & apply policies to those, e.g. no internet/ssh)
+  Reachability - Create port-connection graph of EC2 instances, showing which nodes can connect to which other nodes on each layer
+  Implement PCI Requirements
